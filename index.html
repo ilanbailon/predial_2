@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -945,6 +946,955 @@ function setupReportElements(){
   });
 }
 
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Geoportal Predial</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <!-- Chart.js para el reporte -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root{
+      --brand:#0f172a; --accent:#0ea5e9; --accent-dark:#0369a1;
+      --panel-bg:#f8fafc; --card:#ffffff; --line:#e2e8f0;
+      --predio:#0ea5e9; --comunidad:#22c55e; --otros:#a855f7; --highlight:#e11d48;
+      --text:#0f172a;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;overflow:hidden;}
+    header{
+      display:flex;gap:12px;align-items:center;justify-content:space-between;
+      padding:10px 16px;background:var(--brand);color:#fff;position:relative;z-index:5000;
+      box-shadow:0 2px 10px rgba(0,0,0,.25);
+    }
+    header .title{font-weight:700;letter-spacing:.3px}
+    #centerControls{flex:1;display:flex;justify-content:center;position:relative}
+    #searchWrap{position:relative;width:min(520px,90%)}
+    #searchBox{
+      width:100%;padding:10px 14px;border-radius:24px;border:none;outline:none;
+      font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,.15) inset, 0 1px 0 rgba(255,255,255,.1);
+      color:var(--text);
+    }
+    #suggestions{
+      position:absolute;left:0;right:0;top:44px;background:#fff;
+      border:1px solid var(--line);border-radius:10px;z-index:6000;
+      max-height:240px;overflow:auto;display:none;color:var(--text);
+    }
+    #suggestions.active{display:block}
+    #suggestions div{padding:8px 10px;cursor:pointer;color:var(--text)}
+    #suggestions div:hover{background:#f1f5f9}
+
+    #rightControls{display:flex;align-items:center;gap:8px}
+    select,button{padding:8px 10px;border-radius:8px;border:1px solid transparent;font-size:14px}
+    select{background:#fff;border-color:var(--line);color:var(--text)}
+    .btn{background:var(--accent);color:#fff;cursor:pointer}
+    .btn:hover{background:var(--accent-dark)}
+    .ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.35)}
+    .ghost:hover{border-color:#fff}
+
+    #split{display:flex;height:calc(100% - 60px);min-height:300px}
+    #leftPane{flex-basis:60%;position:relative;background:#000}
+    #rightPane{flex:1;background:var(--panel-bg);border-left:1px solid var(--line);overflow:auto}
+    #gutter{width:6px;cursor:col-resize;background:linear-gradient(90deg,transparent,rgba(0,0,0,.08),transparent)}
+    #map{position:absolute;inset:0}
+
+    .panel{padding:16px}
+    h3{margin:8px 0 12px;color:var(--accent-dark)}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .block{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+    .label{font-weight:700;margin-bottom:4px}
+    .textblock{white-space:pre-line;background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px;color:var(--text)}
+    .area-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;margin:10px 0; transition: box-shadow .2s, background .2s}
+    .area-card h4{margin:0 0 6px;color:var(--accent)}
+    .area-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .pill{padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer}
+    .pill:hover{border-color:var(--accent)}
+    .muted{color:#64748b;font-size:12px}
+    .badge{background:#eef2ff;border:1px solid var(--line);border-radius:999px;padding:4px 8px;font-size:12px;color:var(--text)}
+
+    input,textarea{width:100%;padding:6px;border:1px solid var(--line);border-radius:8px;color:var(--text)}
+    .btn-small{padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer}
+    .btn-small:hover{border-color:var(--accent)}
+
+    .modal-back{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.45);z-index:7000}
+    .modal{background:#fff;border-radius:12px;padding:16px;width:min(520px,90vw);max-height:85vh;overflow:auto;box-shadow:0 24px 48px rgba(15,23,42,.28)}
+
+    
+    .plan-text{display:inline-block;padding:2px 8px;border-radius:999px;background:#fef3c7;color:#92400e;font-weight:600;font-size:12px}
+    .plan-header{display:flex;flex-direction:column;gap:6px}
+    .plan-header button{align-self:flex-start}
+    .day-head.sunday,.report td.sunday{background:#fee2e2!important;color:#b91c1c}
+    .report td.sunday .plan-text{background:#fecaca;color:#7f1d1d}
+
+    .modal-back{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.45);z-index:7000}
+    .modal{background:#fff;border-radius:12px;padding:16px;width:min(520px,90vw);max-height:85vh;overflow:auto;box-shadow:0 24px 48px rgba(15,23,42,.28)}
+
+
+    
+    .plan-text{display:inline-block;padding:2px 8px;border-radius:999px;background:#fef3c7;color:#92400e;font-weight:600;font-size:12px}
+    .plan-header{display:flex;flex-direction:column;gap:6px}
+    .plan-header button{align-self:flex-start}
+    .day-head.sunday,.report td.sunday{background:#fee2e2!important;color:#b91c1c}
+    .report td.sunday .plan-text{background:#fecaca;color:#7f1d1d}
+
+    .plan-cell{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+    .plan-edit-btn{padding:2px 6px;border-radius:6px;border:1px solid var(--line);background:#fff;font-size:12px;cursor:pointer;color:var(--text)}
+    .plan-edit-btn:hover{border-color:var(--accent);color:var(--accent-dark)}
+
+
+    /* ===== Drawer Reporte ===== */
+    .drawer{
+      position:fixed; top:60px; right:0;
+      width:min(1100px,92vw); height:calc(100% - 60px);
+      background:#fff; border-left:1px solid #e5e7eb; box-shadow:-12px 0 30px rgba(0,0,0,.15);
+      transform:translateX(100%); transition:transform .25s ease; z-index:6000; overflow:auto;
+    }
+    .drawer.open{ transform:translateX(0); }
+    .drawer-head{display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;border-bottom:1px solid #e5e7eb;padding:12px 16px;z-index:1}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 16px}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid #e2e8f0;border-radius:999px;background:#fff;cursor:pointer;margin-right:6px;margin-bottom:6px}
+    .chip input{transform:scale(1.1)}
+    .chip.active{background:#eef7ff;border-color:#bfdbfe}
+    .kpi-line{display:flex;gap:10px;flex-wrap:wrap;margin:8px 16px}
+    .kpi{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:10px;min-width:160px}
+    .kpi .val{font-weight:800;font-size:20px}
+    table.report{border-collapse:collapse;width:calc(100% - 32px);margin:0 16px 12px}
+    table.report th, table.report td{border:1px solid #e5e7eb;padding:6px 8px;text-align:center;vertical-align:top;background:#fff}
+    th.sticky{position:sticky;z-index:3;background:#f6f6f6}
+    td.sticky{position:sticky;z-index:2;background:#fff}
+    th.sticky.l1, td.sticky.l1 { left:0; min-width:220px; text-align:left;}
+    .ovr-input{width:64px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:8px;text-align:center}
+    #chartWrap{margin:12px 16px 16px;border:1px solid #eee;border-radius:10px;padding:10px;background:#fff}
+    #rp_detail{margin:0 16px 16px;border:1px dashed #e5e7eb;border-radius:10px;padding:10px;background:#fafafa}
+
+    .plan-modal-grid{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+    .plan-modal-row{display:grid;grid-template-columns:160px 140px 1fr;gap:8px;align-items:center;padding:6px 8px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc}
+    .plan-modal-row.sunday{background:#fee2e2;border-color:#fecaca}
+    .plan-modal-row .plan-date{font-weight:600}
+    .plan-modal-row .plan-date small{display:block;font-size:12px;color:#64748b;font-weight:400}
+    .plan-modal-row input[type="number"]{width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:8px}
+    .plan-modal-row input[type="text"]{width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:8px}
+    .plan-modal-row select{width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:8px}
+
+    .plan-modal-grid{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+    .plan-modal-row{display:grid;grid-template-columns:160px 140px 1fr;gap:8px;align-items:center;padding:6px 8px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc}
+    .plan-modal-row.sunday{background:#fee2e2;border-color:#fecaca}
+    .plan-modal-row .plan-date{font-weight:600}
+    .plan-modal-row .plan-date small{display:block;font-size:12px;color:#64748b;font-weight:400}
+    .plan-modal-row input[type="number"]{width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:8px}
+    .plan-modal-row input[type="text"]{width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:8px}
+    .plan-modal-row select{width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:8px}
+
+    .code-link{
+      display:inline-block; padding:4px 8px; margin:2px 4px; border:1px solid #cbd5e1; border-radius:999px; background:#fff; cursor:pointer; font-size:12px;
+    }
+    .code-link:hover{ border-color:var(--accent); }
+
+    /* flash highlight for selected area card */
+    @keyframes flash {
+      0% { box-shadow:0 0 0 rgba(14,165,233,0); background:#fff; }
+      20%{ box-shadow:0 0 0 6px rgba(14,165,233,.15); background:#e0f2fe; }
+      100%{ box-shadow:0 0 0 rgba(14,165,233,0); background:#fff; }
+    }
+    .flash { animation: flash 1s ease-out 1; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title">Geoportal Predial</div>
+
+    <div id="centerControls">
+      <div id="searchWrap">
+        <input id="searchBox" type="text" placeholder="🔍 Buscar cod_prel o cod_mtc…" autocomplete="off" />
+        <div id="suggestions"></div>
+      </div>
+    </div>
+
+    <div id="rightControls">
+      <button class="ghost" id="btnReport">📊 Reporte</button>
+      <select id="filterComunidad"><option value="">Comunidad (todas)</option></select>
+      <select id="filterGrupo"><option value="">Grupo (todos)</option></select>
+      <button class="btn" id="btnFiltrar">Filtrar</button>
+      <button class="ghost" id="btnReset">Reset</button>
+    </div>
+  </header>
+
+  <div id="split">
+    <section id="leftPane"><div id="map"></div></section>
+    <div id="gutter" title="Arrastra para redimensionar"></div>
+    <section id="rightPane">
+      <div class="panel">
+        <h3>Detalle del predio</h3>
+
+        <!-- Datos comunes -->
+        <div id="commonBlock" class="block" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="label">Datos comunes</div>
+              <span id="unionCount" class="badge"></span>
+            </div>
+            <div><button id="btnEditCommon" class="btn-small">✏️ Editar comunes</button></div>
+          </div>
+
+          <!-- Lectura -->
+          <div id="commonView">
+            <div class="grid-2">
+              <div><div class="label">Código MTC</div><div id="cm_mtc" class="textblock"></div></div>
+              <div><div class="label">Comunidad</div><div id="cm_comunidad" class="textblock"></div></div>
+              <div style="grid-column:1/-1"><div class="label">Titular</div><div id="cm_titular" class="textblock"></div></div>
+              <div style="grid-column:1/-1"><div class="label">DNI / RUC</div><div id="cm_dni" class="textblock"></div></div>
+              <div style="grid-column:1/-1"><div class="label">Contacto</div><div id="cm_contacto" class="textblock"></div></div>
+              <div><div class="label">Condición</div><div id="cm_condicion" class="textblock"></div></div>
+              <div><div class="label">Tipo</div><div id="cm_tipo" class="textblock"></div></div>
+              <div><div class="label">Responsable</div><div id="cm_responsable" class="textblock"></div></div>
+              <div><div class="label">Grupo</div><div id="cm_grupo" class="textblock"></div></div>
+              <div><div class="label">Fecha elaboración</div><div id="cm_fecha" class="textblock"></div></div>
+            </div>
+          </div>
+
+          <!-- Edición -->
+          <div id="commonEdit" style="display:none">
+            <div class="grid-2">
+              <div><div class="label">Código MTC</div><input id="ed_mtc" type="text"></div>
+              <div><div class="label">Comunidad</div><input id="ed_comunidad" type="text"></div>
+              <div style="grid-column:1/-1"><div class="label">Titular</div><textarea id="ed_titular" rows="3" style="white-space:pre-line"></textarea></div>
+              <div style="grid-column:1/-1"><div class="label">DNI / RUC</div><textarea id="ed_dni" rows="2" style="white-space:pre-line"></textarea></div>
+              <div style="grid-column:1/-1"><div class="label">Contacto</div><textarea id="ed_contacto" rows="2" style="white-space:pre-line"></textarea></div>
+              <div><div class="label">Condición</div><input id="ed_condicion" type="text"></div>
+              <div>
+                <div class="label">Tipo</div>
+                <select id="ed_tipo">
+                  <option value="predios">predios</option>
+                  <option value="comunidad">comunidad</option>
+                </select>
+              </div>
+              <div><div class="label">Responsable</div><select id="ed_responsable"></select></div>
+              <div><div class="label">Grupo</div><select id="ed_grupo"></select></div>
+              <div><div class="label">Fecha elaboración</div><input id="ed_fecha" type="date"></div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+              <button id="btnCancelCommon" class="btn-small">Cancelar</button>
+              <button id="btnSaveCommon" class="btn">Guardar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Áreas afectadas -->
+        <div id="areasWrap" class="block" style="display:none">
+          <div class="label">Áreas afectadas</div>
+          <div id="areasList"></div>
+        </div>
+
+        <div id="emptyHint" class="muted">Selecciona un polígono o busca por código.</div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal Detalle de Área (se mantiene igual) -->
+  <div id="modalAreaBack" class="modal-back" style="display:none">
+    <div class="modal">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h3>Detalles del Área Afectada</h3>
+        <button class="btn-small" onclick="closeAreaModal()">✕</button>
+      </div>
+      <div class="grid-2">
+        <div><div class="label">cod_prel</div><input id="a_cod_prel" type="text" disabled></div>
+        <div><div class="label">Área</div><input id="a_area" type="text"></div>
+        <div><div class="label">Perímetro</div><input id="a_perimetro" type="text"></div>
+        <div><div class="label">Prog. Ini</div><input id="a_prog_ini" type="text"></div>
+        <div><div class="label">Prog. Fin</div><input id="a_prog_fin" type="text"></div>
+        <div><div class="label">Lado</div><input id="a_lado" type="text"></div>
+        <div style="grid-column:1/-1"><div class="label">Obra complementaria</div><textarea id="a_obra" rows="3" style="white-space:pre-line"></textarea></div>
+        <div style="grid-column:1/-1"><div class="label">Plantaciones</div><textarea id="a_plantaciones" rows="3" style="white-space:pre-line"></textarea></div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+        <button class="btn-small" onclick="closeAreaModal()">Cancelar</button>
+        <button class="btn" onclick="saveArea()">Guardar</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal Planificado -->
+  <div id="planModalBack" class="modal-back" style="display:none">
+    <div class="modal">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h3 id="planModalTitle">Actualizar avance diario</h3>
+        <button class="btn-small" type="button" onclick="closePlanModal()">✕</button>
+      </div>
+      <p class="muted" style="margin-top:0">Define valores diarios planificados. Puedes alternar entre número o texto (por ejemplo, "Vacaciones").</p>
+      <div id="planModalList" class="plan-modal-grid"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+        <button class="btn-small" type="button" onclick="closePlanModal()">Cancelar</button>
+        <button class="btn" type="button" id="planModalSave">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenedor para reporte embebido -->
+  <div id="reportHost" data-src="report.html"></div>
+
+    </div>
+  </div>
+
+  <!-- Modal Planificado -->
+  <div id="planModalBack" class="modal-back" style="display:none">
+    <div class="modal">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h3 id="planModalTitle">Actualizar avance diario</h3>
+        <button class="btn-small" type="button" onclick="closePlanModal()">✕</button>
+      </div>
+      <p class="muted" style="margin-top:0">Define valores diarios planificados. Puedes alternar entre número o texto (por ejemplo, "Vacaciones").</p>
+      <div id="planModalList" class="plan-modal-grid"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+        <button class="btn-small" type="button" onclick="closePlanModal()">Cancelar</button>
+        <button class="btn" type="button" id="planModalSave">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drawer Reporte -->
+  <aside id="reportDrawer" class="drawer" aria-hidden="true">
+    <div class="drawer-head">
+      <h3 style="margin:0">Reporte — Planificado vs Elaborado (por grupo UNIR)</h3>
+      <button class="btn-small" id="rp_close">✕</button>
+    </div>
+
+    <div class="row">
+      <label>Desde: <input id="rp_start" type="date"></label>
+      <label>Hasta: <input id="rp_end" type="date"></label>
+      <button class="btn" id="rp_run">Generar</button>
+      <button class="ghost" id="rp_toggleEdit">Editar Planificado</button>
+      <span id="rp_status" class="muted"></span>
+    </div>
+
+    <div id="rp_chips" class="row" style="margin-top:-8px"></div>
+
+    <div class="kpi-line">
+      <div class="kpi"><div class="label">Total Elaborado (rango, por UNIR)</div><div id="kpi_total" class="val">—</div></div>
+      <div class="kpi"><div class="label">Responsables activos</div><div id="kpi_resps" class="val">—</div></div>
+    </div>
+
+    <div style="overflow:auto;border:1px solid #eee;border-radius:10px;margin:0 16px 12px">
+      <table id="rp_table" class="report"></table>
+    </div>
+
+    <div id="chartWrap" style="display:none">
+      <canvas id="rp_chart" height="280"></canvas>
+    </div>
+
+    <div id="rp_detail" style="display:none"></div>
+  </aside>
+
+
+<script>
+/** ====== CONFIG ====== **/
+const SUPABASE_URL = "https://wbzxbfqowlfmmkwqeyam.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndienhiZnFvd2xmbW1rd3FleWFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5ODUwMDQsImV4cCI6MjA3MjU2MTAwNH0.mJJ7yID73tUerWE_aiNw3ZE4o-Q9YrT39YN-iS2CksA";
+const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/** ====== MAP ====== **/
+const map = L.map('map', { zoomControl:true }).setView([-15.5, -70.1], 17);
+L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom:21, attribution:'© Google' }).addTo(map);
+
+const normalStyle   = { color:"var(--predio)",    weight:2, fillOpacity:0.2 };
+const commStyle     = { color:"var(--comunidad)", weight:2, fillOpacity:0.2 };
+const otherStyle    = { color:"var(--otros)",     weight:2, fillOpacity:0.2 };
+const highlightStyle= { color:"var(--highlight)", weight:3, fillOpacity:0.4 };
+
+let selectedCodPrel = null;
+let currentUnirId = null;
+
+const capaPredio    = L.geoJSON(null, { style: normalStyle }).addTo(map);
+const capaComunidad = L.geoJSON(null, { style: commStyle   }).addTo(map);
+const capaOtros     = L.geoJSON(null, { style: otherStyle  }).addTo(map);
+
+L.control.layers(null, { "Predios":capaPredio, "Comunidades":capaComunidad, "Otros":capaOtros }).addTo(map);
+
+function isPredios(v){ return (v||"").toLowerCase() === "predios" || (v||"").toLowerCase() === "predio"; }
+function isComunidad(v){ return (v||"").toLowerCase() === "comunidad"; }
+function styleByTipo(t){ return isComunidad(t) ? commStyle : isPredios(t) ? normalStyle : otherStyle; }
+
+/** ====== DATA LOAD ====== **/
+async function loadAllPredios(){
+  const { data, error } = await client
+    .from("cod_pred")
+    .select("cod_prel,unir,comunidad,condicion,codigo_mtc,titular,tipo,geom");
+  if(error){ console.error(error); return; }
+
+  capaPredio.clearLayers(); capaComunidad.clearLayers(); capaOtros.clearLayers();
+
+  data.forEach(p=>{
+    if(!p.geom) return;
+    const f = { type:"Feature", geometry:p.geom, properties:p };
+    const layer = L.geoJSON(f, { style: styleByTipo(p.tipo) });
+    layer.on("click", () => { selectedCodPrel = p.cod_prel; showGroup(p.unir); });
+    if(isComunidad(p.tipo)) layer.addTo(capaComunidad);
+    else if(isPredios(p.tipo)) layer.addTo(capaPredio);
+    else layer.addTo(capaOtros);
+  });
+
+  const bounds = capaPredio.getLayers().length ? capaPredio.getBounds()
+               : capaComunidad.getLayers().length ? capaComunidad.getBounds()
+               : capaOtros.getLayers().length ? capaOtros.getBounds() : null;
+  if(bounds) map.fitBounds(bounds);
+}
+
+/** ====== DESTACAR GRUPO ====== **/
+function highlightGroup(unirId, zoomTo=true){
+  let groupBounds = null;
+  const restyle = (grp)=>{
+    grp.eachLayer(l=>{
+      const props = l.feature?.properties;
+      const setLayer = (ly, pr)=>{
+        const match = pr.unir === unirId;
+        ly.setStyle(match ? highlightStyle : styleByTipo(pr.tipo));
+        if(match){ ly.bringToFront(); if(ly.getBounds){ groupBounds = groupBounds ? groupBounds.extend(ly.getBounds()) : ly.getBounds(); } }
+      };
+      if(props) setLayer(l, props);
+      l.eachLayer?.((sub)=>{ if(sub.feature?.properties) setLayer(sub, sub.feature.properties); });
+    });
+  };
+  [capaPredio, capaComunidad, capaOtros].forEach(restyle);
+  if(groupBounds && zoomTo) map.fitBounds(groupBounds, { padding:[40,40], maxZoom:20 });
+}
+
+/** ====== UI PANEL ====== **/
+const blockCommon  = document.getElementById("commonBlock");
+const wrapAreas    = document.getElementById("areasWrap");
+const listAreas    = document.getElementById("areasList");
+const emptyHint    = document.getElementById("emptyHint");
+const unionCount   = document.getElementById("unionCount");
+
+const commonView   = document.getElementById("commonView");
+const commonEdit   = document.getElementById("commonEdit");
+const btnEditCommon= document.getElementById("btnEditCommon");
+const btnSaveCommon= document.getElementById("btnSaveCommon");
+const btnCancelCommon= document.getElementById("btnCancelCommon");
+
+let currentCommon = null;
+
+async function showGroup(unirId){
+  const { data, error } = await client.from("cod_pred").select("*").eq("unir", unirId);
+  if(error || !data?.length){ return; }
+
+  currentUnirId = unirId;
+  highlightGroup(unirId, true);
+  unionCount.textContent = `Se unen: ${data.length} ${data.length===1?'código':'códigos'}`;
+
+  const c = data[0];
+  currentCommon = {
+    codigo_mtc: c.codigo_mtc || "",
+    titular:    c.titular    || "",
+    dni_ruc:    c.dni_ruc    || "",
+    contacto:   c.contacto   || "",
+    comunidad:  c.comunidad  || "",
+    condicion:  c.condicion  || "",
+    tipo:       normTipo(c.tipo),
+    responsable:c.responsable || "",
+    grupo:      c.grupo       || "",
+    fecha:      c.fecha_elab  || ""
+  };
+
+  blockCommon.style.display = "";
+  wrapAreas.style.display = "";
+  emptyHint.style.display = "none";
+
+  setText("cm_mtc", currentCommon.codigo_mtc);
+  setText("cm_titular", currentCommon.titular);
+  setText("cm_dni", currentCommon.dni_ruc);
+  setText("cm_contacto", currentCommon.contacto);
+  setText("cm_comunidad", currentCommon.comunidad);
+  setText("cm_condicion", currentCommon.condicion);
+  setText("cm_tipo", currentCommon.tipo || "predios");
+  setText("cm_responsable", currentCommon.responsable);
+  setText("cm_grupo", currentCommon.grupo);
+  setText("cm_fecha", currentCommon.fecha ? String(currentCommon.fecha).slice(0,10) : "");
+
+  setVal("ed_mtc", currentCommon.codigo_mtc);
+  setVal("ed_titular", currentCommon.titular);
+  setVal("ed_dni", currentCommon.dni_ruc);
+  setVal("ed_contacto", currentCommon.contacto);
+  setVal("ed_comunidad", currentCommon.comunidad);
+  setVal("ed_condicion", currentCommon.condicion);
+  setVal("ed_tipo", currentCommon.tipo || "predios");
+  setVal("ed_responsable", currentCommon.responsable);
+  setVal("ed_grupo", currentCommon.grupo);
+  document.getElementById("ed_fecha").value = currentCommon.fecha ? String(currentCommon.fecha).slice(0,10) : "";
+
+  listAreas.innerHTML = "";
+  data.forEach(p=>{
+    const card = document.createElement("div");
+    card.className = "area-card";
+    card.setAttribute("data-cod", p.cod_prel);
+    card.innerHTML = `
+      <h4>${p.cod_prel}</h4>
+      <div><b>Área:</b> ${p.area ?? ""}</div>
+      <div><b>Prog:</b> ${p.prog_ini ?? ""} - ${p.prog_fin ?? ""} &nbsp; <b>Lado:</b> ${p.lado ?? ""}</div>
+      <div class="area-actions">
+        <button class="pill" data-cod="${p.cod_prel}" data-action="focus">Enfocar</button>
+        <button class="pill" data-cod="${p.cod_prel}" data-action="detalles">Ver detalles</button>
+      </div>
+    `;
+    listAreas.appendChild(card);
+  });
+  listAreas.querySelectorAll("button").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      const cod = e.currentTarget.dataset.cod;
+      const action = e.currentTarget.dataset.action;
+      if(action==="focus"){ selectedCodPrel = cod; focusByCodPrel(cod); highlightGroup(currentUnirId, false); }
+      if(action==="detalles") openAreaModal(cod);
+    });
+  });
+
+  setCommonMode(false);
+}
+function setText(id, val){ document.getElementById(id).textContent = val ?? ""; }
+function setVal(id, val){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const value = val ?? "";
+  if(el.tagName === "SELECT" && value){
+    const hasOption = Array.from(el.options).some(opt => opt.value === value);
+    if(!hasOption){
+      const opt = document.createElement("option");
+      opt.value = value;
+      opt.textContent = value;
+      el.appendChild(opt);
+    }
+  }
+  el.value = value;
+}
+function normTipo(v){ const s=(v||"").toLowerCase(); if(s==="comunidad") return "comunidad"; return "predios"; }
+function setCommonMode(edit){
+  commonView.style.display = edit ? "none" : "";
+  commonEdit.style.display = edit ? "" : "none";
+  btnEditCommon.style.display = edit ? "none" : "";
+}
+btnEditCommon.addEventListener("click", ()=> setCommonMode(true));
+btnCancelCommon.addEventListener("click", ()=> {
+  if(currentCommon){
+    setVal("ed_mtc", currentCommon.codigo_mtc);
+    setVal("ed_titular", currentCommon.titular);
+    setVal("ed_dni", currentCommon.dni_ruc);
+    setVal("ed_contacto", currentCommon.contacto);
+    setVal("ed_comunidad", currentCommon.comunidad);
+    setVal("ed_condicion", currentCommon.condicion);
+    setVal("ed_tipo", currentCommon.tipo || "predios");
+    setVal("ed_responsable", currentCommon.responsable);
+    setVal("ed_grupo", currentCommon.grupo);
+    document.getElementById("ed_fecha").value = currentCommon.fecha ? String(currentCommon.fecha).slice(0,10) : "";
+  }
+  setCommonMode(false);
+});
+btnSaveCommon.addEventListener("click", async ()=>{
+  const payload = {
+    codigo_mtc:  valOrNull("ed_mtc"),
+    titular:     valOrNull("ed_titular"),
+    dni_ruc:     valOrNull("ed_dni"),
+    contacto:    valOrNull("ed_contacto"),
+    comunidad:   valOrNull("ed_comunidad"),
+    condicion:   valOrNull("ed_condicion"),
+    tipo:        normTipo(document.getElementById("ed_tipo").value),
+    responsable: valOrNull("ed_responsable"),
+    grupo:       valOrNull("ed_grupo"),
+    fecha_elab:  (document.getElementById("ed_fecha").value || null)
+  };
+  const { error } = await client.from("cod_pred").update(payload).eq("unir", currentUnirId);
+  if(error){ alert("❌ Error al guardar comunes: "+error.message); return; }
+  alert("✅ Datos comunes actualizados");
+  await loadAllPredios();
+  await hydrateLookups();
+  await showGroup(currentUnirId);
+});
+function valOrNull(id){ const v = document.getElementById(id).value; return v==="" ? null : v; }
+
+function focusByCodPrel(cod){
+  let found = null;
+  [capaPredio, capaComunidad, capaOtros].forEach(group=>{
+    group.eachLayer(l=>{
+      if(l.feature?.properties?.cod_prel === cod) found = l;
+      l.eachLayer?.((sub)=>{ if(sub.feature?.properties?.cod_prel === cod) found = sub; });
+    });
+  });
+  if(found){
+    const b = found.getBounds?.();
+    if(b) map.fitBounds(b, { maxZoom: 20, padding:[40,40] });
+  }
+}
+
+/** ====== SEARCH ====== **/
+const searchBox = document.getElementById("searchBox");
+const suggestions = document.getElementById("suggestions");
+let debounceTimer = null;
+searchBox.addEventListener("input", (e)=>{
+  const q = e.target.value.trim();
+  clearTimeout(debounceTimer);
+  if(q.length < 2){ suggestions.classList.remove("active"); suggestions.innerHTML=""; return; }
+  debounceTimer = setTimeout(()=> runSuggest(q), 250);
+});
+searchBox.addEventListener("blur", ()=> setTimeout(()=>{ suggestions.classList.remove("active"); }, 150));
+async function runSuggest(q){
+  const { data, error } = await client.from("cod_pred")
+    .select("cod_prel,codigo_mtc,unir")
+    .or(`cod_prel.ilike.%${q}%,codigo_mtc.ilike.%${q}%`).limit(12);
+  if(error){ console.error(error); return; }
+  suggestions.innerHTML = "";
+  data.forEach(r=>{
+    const row = document.createElement("div");
+    row.textContent = `${r.cod_prel} (${r.codigo_mtc ?? "—"})`;
+    row.onclick = ()=>{ suggestions.classList.remove("active"); showGroup(r.unir); };
+    suggestions.appendChild(row);
+  });
+  suggestions.classList.add("active");
+}
+
+/** ====== FILTERS ====== **/
+const selCom = document.getElementById("filterComunidad");
+const selGrupo = document.getElementById("filterGrupo");
+const selRespEdit = document.getElementById("ed_responsable");
+const selGrupoEdit = document.getElementById("ed_grupo");
+const PRESET_GRUPOS = ["1","2","3","4","1er_entregable"];
+
+document.getElementById("btnFiltrar").addEventListener("click", applyFilters);
+document.getElementById("btnReset").addEventListener("click", async ()=>{
+  selCom.value=""; selGrupo.value=""; searchBox.value="";
+  await loadAllPredios();
+  blockCommon.style.display="none"; wrapAreas.style.display="none"; emptyHint.style.display="";
+});
+
+function fillSelect(el, values, { placeholder, format } = {}){
+  if(!el) return;
+  const prev = el.value;
+  el.innerHTML = "";
+  if(placeholder !== undefined){
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = placeholder;
+    el.appendChild(opt);
+  }
+  values.forEach(v=>{
+    const value = v ?? "";
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = format ? format(value) : value;
+    el.appendChild(opt);
+  });
+  if(prev && values.includes(prev)){
+    el.value = prev;
+  }
+}
+
+async function hydrateLookups(){
+  const { data, error } = await client.from("cod_pred").select("comunidad,responsable,grupo").not("geom","is",null);
+  if(error){ console.error(error); return; }
+  const comunidades = new Set();
+  const responsables = new Set();
+  const grupos = new Set(PRESET_GRUPOS);
+  (data||[]).forEach(row=>{
+    if(row.comunidad) comunidades.add(row.comunidad);
+    if(row.responsable) responsables.add(row.responsable);
+    if(row.grupo) grupos.add(String(row.grupo));
+  });
+
+  const sortAlpha = arr => [...arr].map(v=>v ?? "").filter(Boolean).sort((a,b)=>a.localeCompare(b,'es',{ sensitivity:'base' }));
+  const extraGroups = sortAlpha([...grupos].filter(g => !PRESET_GRUPOS.includes(g)));
+  const groupValues = [...PRESET_GRUPOS, ...extraGroups];
+
+  fillSelect(selCom, sortAlpha(comunidades), { placeholder: "Comunidad (todas)" });
+  fillSelect(selGrupo, groupValues, { placeholder: "Grupo (todos)", format: v=>v });
+  fillSelect(selRespEdit, sortAlpha(responsables), { placeholder: "Selecciona responsable", format: v=>cap(v) });
+  fillSelect(selGrupoEdit, groupValues, { placeholder: "Selecciona grupo", format: v=>v });
+}
+
+async function applyFilters(){
+  let q = client.from("cod_pred").select("cod_prel,unir,tipo,geom,comunidad,condicion");
+  if(selCom.value) q = q.eq("comunidad", selCom.value);
+  if(selGrupo.value) q = q.eq("grupo", selGrupo.value);
+
+  const { data, error } = await q;
+  if(error){ console.error(error); return; }
+
+  capaPredio.clearLayers(); capaComunidad.clearLayers(); capaOtros.clearLayers();
+  data.forEach(p=>{
+    if(!p.geom) return;
+    const f = { type:"Feature", geometry:p.geom, properties:p };
+    const layer = L.geoJSON(f, { style: styleByTipo(p.tipo) });
+    layer.on("click", () => { selectedCodPrel = p.cod_prel; showGroup(p.unir); });
+    if(isComunidad(p.tipo)) layer.addTo(capaComunidad);
+    else if(isPredios(p.tipo)) layer.addTo(capaPredio);
+    else layer.addTo(capaOtros);
+  });
+
+  const bounds = capaPredio.getLayers().length ? capaPredio.getBounds()
+               : capaComunidad.getLayers().length ? capaComunidad.getBounds()
+               : capaOtros.getLayers().length ? capaOtros.getBounds() : null;
+  if(bounds) map.fitBounds(bounds);
+}
+
+/** ====== MODAL ÁREA (misma lógica) ====== **/
+
+const modalAreaBack = document.getElementById("modalAreaBack");
+const planModalBack = document.getElementById("planModalBack");
+const planModalTitle = document.getElementById("planModalTitle");
+const planModalList = document.getElementById("planModalList");
+const planModalSave = document.getElementById("planModalSave");
+let planModalResp = null;
+function openAreaModal(cod){
+  modalAreaBack.style.display = "flex";
+  client.from("cod_pred").select("*").eq("cod_prel",cod).single().then(({data})=>{
+
+const modalAreaBack = document.getElementById("modalAreaBack");
+const planModalBack = document.getElementById("planModalBack");
+const planModalTitle = document.getElementById("planModalTitle");
+const planModalList = document.getElementById("planModalList");
+const planModalSave = document.getElementById("planModalSave");
+let planModalResp = null;
+function openAreaModal(cod){
+  modalAreaBack.style.display = "flex";
+  client.from("cod_pred").select("*").eq("cod_prel",cod).single().then(({data})=>{
+
+    if(!data) return;
+    setVal("a_cod_prel", data.cod_prel ?? "");
+    setVal("a_area", data.area ?? "");
+    setVal("a_perimetro", data.perimetro_suma ?? "");
+    setVal("a_prog_ini", data.prog_ini ?? "");
+    setVal("a_prog_fin", data.prog_fin ?? "");
+    setVal("a_lado", data.lado ?? "");
+    document.getElementById("a_obra").value = data.obra_complementaria ?? "";
+    document.getElementById("a_plantaciones").value = data.plantaciones ?? "";
+  });
+
+}
+function closeAreaModal(){ modalAreaBack.style.display = "none"; }
+function closePlanModal(){ planModalBack.style.display = "none"; planModalResp = null; planModalList.innerHTML = ""; planModalSave.disabled = false; planModalSave.textContent = "Guardar cambios"; }
+async function saveArea(){
+  const cod = document.getElementById("a_cod_prel").value;
+  const update = {
+    area: valOrNull("a_area"),
+
+}
+function closeAreaModal(){ modalAreaBack.style.display = "none"; }
+function closePlanModal(){ planModalBack.style.display = "none"; planModalResp = null; planModalList.innerHTML = ""; planModalSave.disabled = false; planModalSave.textContent = "Guardar cambios"; }
+async function saveArea(){
+  const cod = document.getElementById("a_cod_prel").value;
+  const update = {
+    area: valOrNull("a_area"),
+
+    perimetro_suma: valOrNull("a_perimetro"),
+    prog_ini: valOrNull("a_prog_ini"),
+    prog_fin: valOrNull("a_prog_fin"),
+    lado: valOrNull("a_lado"),
+    obra_complementaria: (document.getElementById("a_obra").value || null),
+    plantaciones: (document.getElementById("a_plantaciones").value || null)
+  };
+  const { error } = await client.from("cod_pred").update(update).eq("cod_prel", cod);
+  if(error){ alert("❌ Error al guardar: "+error.message); return; }
+  alert("✅ Área actualizada");
+  closeAreaModal();
+  await loadAllPredios();
+
+  if(currentUnirId) highlightGroup(currentUnirId, false);
+}
+
+function openPlanModal(resp){
+  const pretty = cap(resp);
+  const days = window._planDays || [];
+  const data = window._planCounts?.[resp] || {};
+  planModalResp = resp;
+  planModalTitle.textContent = `Actualizar avance diario — ${pretty}`;
+  planModalList.innerHTML = "";
+
+  days.forEach(day=>{
+    const entry = data[day] || { tipo:"numero", valor:0 };
+    const row = document.createElement("div");
+    row.className = "plan-modal-row" + (new Date(day).getDay() === 0 ? " sunday" : "");
+    row.dataset.date = day;
+
+    const label = document.createElement("div");
+    label.className = "plan-date";
+    const dateObj = new Date(day);
+    const weekday = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"][dateObj.getDay()];
+    label.innerHTML = `<span>${day}</span><small>${weekday}</small>`;
+
+    const typeWrap = document.createElement("div");
+    const select = document.createElement("select");
+    select.innerHTML = `<option value="numero">Número</option><option value="texto">Texto</option>`;
+    select.value = entry.tipo === "texto" ? "texto" : "numero";
+    typeWrap.appendChild(select);
+
+    const inputWrap = document.createElement("div");
+    const input = document.createElement("input");
+    const applyType = (type, value)=>{
+      if(type === "numero"){
+        input.type = "number";
+        input.min = "0";
+        input.value = Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : 0;
+      }else{
+        input.type = "text";
+        input.removeAttribute("min");
+        input.value = value ? value.toString() : "Vacaciones";
+      }
+    };
+    if(select.value === "texto"){
+      applyType("texto", entry.tipo === "texto" ? entry.valor : "Vacaciones");
+    }else{
+      applyType("numero", entry.tipo === "numero" ? entry.valor : 0);
+    }
+    input.className = "plan-value-field";
+    inputWrap.appendChild(input);
+
+    select.addEventListener("change",()=>{
+      const current = input.value;
+      if(select.value === "texto"){
+        applyType("texto", current || "Vacaciones");
+      }else{
+        applyType("numero", current);
+      }
+    });
+
+    row.appendChild(label);
+    row.appendChild(typeWrap);
+    row.appendChild(inputWrap);
+    planModalList.appendChild(row);
+  });
+
+  planModalBack.style.display = "flex";
+}
+
+planModalSave?.addEventListener("click", async ()=>{
+  if(!planModalResp) return;
+  const rows = Array.from(planModalList.querySelectorAll(".plan-modal-row"));
+  if(!rows.length){ closePlanModal(); return; }
+
+  const updates = [];
+  for(const row of rows){
+    const date = row.dataset.date;
+    const select = row.querySelector("select");
+    const input = row.querySelector(".plan-value-field");
+    if(!date || !select || !input) continue;
+    const mode = select.value === "texto" ? "texto" : "numero";
+    if(mode === "numero"){
+      const raw = input.value === "" ? "0" : input.value;
+      const num = Number(raw);
+      if(!Number.isFinite(num) || num < 0){
+        alert(`Valor inválido para ${date}. Debe ser un número mayor o igual a 0.`);
+        return;
+      }
+      updates.push({ fecha: date, tipo:"numero", valor: num });
+    }else{
+      const text = (input.value || "Vacaciones").trim();
+      updates.push({ fecha: date, tipo:"texto", valor: text || "Vacaciones" });
+    }
+  }
+
+  const currentData = window._planCounts?.[planModalResp] || {};
+  const pending = updates.filter(item=>{
+    const existing = currentData[item.fecha] || { tipo:"numero", valor:0 };
+    if(existing.tipo === item.tipo){
+      if(item.tipo === "numero") return Number(existing.valor) !== Number(item.valor);
+      return (existing.valor || "").toString() !== (item.valor || "").toString();
+    }
+    return true;
+  });
+
+  if(!pending.length){
+    closePlanModal();
+    rpStatus.textContent = "Sin cambios.";
+    return;
+  }
+
+  planModalSave.disabled = true;
+  planModalSave.textContent = "Guardando…";
+  try{
+    for(const item of pending){
+      await savePlan(planModalResp, item.fecha, item.valor, item.tipo);
+    }
+    closePlanModal();
+    rpStatus.textContent = "Planificado guardado ✓";
+    await runReport();
+  }catch(err){
+    console.error(err);
+    alert("❌ Error al guardar planificado");
+    planModalSave.disabled = false;
+    planModalSave.textContent = "Guardar cambios";
+  }
+});
+
+/** ====== DRAWER REPORTE (por UNIR) ====== **/
+let reportDrawerEl = null;
+let rpStart = null;
+let rpEnd = null;
+let rpRun = null;
+let rpStatus = null;
+let rpChips = null;
+let rpTable = null;
+let rpDetail = null;
+let rpToggle = null;
+let rpChart = null;
+let rpEditMode = false;
+
+async function injectReportDrawer(){
+  const host = document.getElementById("reportHost");
+  if(!host || host.dataset.loaded) return;
+  const src = host.dataset.src || "report.html";
+  try{
+    const response = await fetch(src);
+    if(!response.ok) throw new Error(`HTTP ${response.status}`);
+    host.innerHTML = await response.text();
+    host.dataset.loaded = "1";
+  }catch(err){
+    console.error("No se pudo cargar el reporte embebido:", err);
+    host.innerHTML = `<aside class="drawer" aria-hidden="true"><div class="drawer-head"><h3 style="margin:0">Reporte no disponible</h3></div><div class="row"><span class="muted">No se pudo cargar el recurso ${src}.</span></div></aside>`;
+    host.dataset.error = "1";
+  }
+}
+
+function setupReportElements(){
+  const btnOpen = document.getElementById("btnReport");
+  const btnClose = document.getElementById("rp_close");
+  reportDrawerEl = document.getElementById("reportDrawer");
+  rpStart = document.getElementById("rp_start");
+  rpEnd = document.getElementById("rp_end");
+  rpRun = document.getElementById("rp_run");
+  rpStatus = document.getElementById("rp_status");
+  rpChips = document.getElementById("rp_chips");
+  rpTable = document.getElementById("rp_table");
+  rpDetail = document.getElementById("rp_detail");
+  rpToggle = document.getElementById("rp_toggleEdit");
+
+  if(!reportDrawerEl || !rpStart || !rpEnd || !rpRun || !rpStatus || !rpChips || !rpTable || !rpDetail || !rpToggle){
+    btnOpen?.addEventListener("click", ()=> alert("No se pudo cargar el reporte. Intenta recargar la página."));
+    console.warn("Reporte no inicializado: faltan elementos en el fragmento embebido.");
+    return;
+  }
+
+  btnOpen?.addEventListener("click", openReport);
+  btnClose?.addEventListener("click", closeReport);
+  rpRun.addEventListener("click", runReport);
+  rpToggle.addEventListener("click", ()=>{
+    rpEditMode = !rpEditMode;
+    rpToggle.textContent = rpEditMode ? "Salir de edición" : "Editar Planificado";
+    runReport();
+  });
+  rpDetail.addEventListener("click", async (e)=>{
+    const btn = e.target.closest(".code-link");
+    if(!btn) return;
+    const cod = btn.dataset.code;
+    const unir = btn.dataset.unir;
+    await selectFromReport(unir, cod);
+  });
+}
+
+
 function openReport(){
   if(!reportDrawerEl) return;
   defaultReportDates();
@@ -957,6 +1907,7 @@ function closeReport(){
   reportDrawerEl.classList.remove("open");
   reportDrawerEl.setAttribute("aria-hidden","true");
 }
+
 
 function dateKey(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; }
 function buildDays(from, to){ const a=[]; const cur=new Date(from); while(cur<=to){ a.push(new Date(cur)); cur.setDate(cur.getDate()+1);} return a; }
@@ -1325,3 +2276,829 @@ function parsePlanValue(raw){
 </script>
 </body>
 </html>
+
+function dateKey(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; }
+function buildDays(from, to){ const a=[]; const cur=new Date(from); while(cur<=to){ a.push(new Date(cur)); cur.setDate(cur.getDate()+1);} return a; }
+function defaultReportDates(){
+  if(!rpStart || !rpEnd) return;
+  const today = new Date();
+  let year = today.getFullYear();
+  const startOct = new Date(year, 9, 2);
+  if(today < startOct){
+    year = year - 1;
+  }
+  const start = new Date(year, 9, 2);
+  const end = new Date(year, 9, 31);
+  rpStart.value = dateKey(start);
+  rpEnd.value = dateKey(end);
+}
+async function hydrateRespChips(){
+  if(!rpChips) return;
+  const { data, error } = await client.from("cod_pred").select("responsable").not("responsable","is",null);
+  if(error) return;
+
+  if(currentUnirId) highlightGroup(currentUnirId, false);
+}
+
+function openPlanModal(resp){
+  const pretty = cap(resp);
+  const days = window._planDays || [];
+  const data = window._planCounts?.[resp] || {};
+  planModalResp = resp;
+  planModalTitle.textContent = `Actualizar avance diario — ${pretty}`;
+  planModalList.innerHTML = "";
+
+  days.forEach(day=>{
+    const entry = data[day] || { tipo:"numero", valor:0 };
+    const row = document.createElement("div");
+    row.className = "plan-modal-row" + (new Date(day).getDay() === 0 ? " sunday" : "");
+    row.dataset.date = day;
+
+    const label = document.createElement("div");
+    label.className = "plan-date";
+    const dateObj = new Date(day);
+    const weekday = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"][dateObj.getDay()];
+    label.innerHTML = `<span>${day}</span><small>${weekday}</small>`;
+
+    const typeWrap = document.createElement("div");
+    const select = document.createElement("select");
+    select.innerHTML = `<option value="numero">Número</option><option value="texto">Texto</option>`;
+    select.value = entry.tipo === "texto" ? "texto" : "numero";
+    typeWrap.appendChild(select);
+
+    const inputWrap = document.createElement("div");
+    const input = document.createElement("input");
+    const applyType = (type, value)=>{
+      if(type === "numero"){
+        input.type = "number";
+        input.min = "0";
+        input.value = Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : 0;
+      }else{
+        input.type = "text";
+        input.removeAttribute("min");
+        input.value = value ? value.toString() : "Vacaciones";
+      }
+    };
+    if(select.value === "texto"){
+      applyType("texto", entry.tipo === "texto" ? entry.valor : "Vacaciones");
+    }else{
+      applyType("numero", entry.tipo === "numero" ? entry.valor : 0);
+    }
+    input.className = "plan-value-field";
+    inputWrap.appendChild(input);
+
+    select.addEventListener("change",()=>{
+      const current = input.value;
+      if(select.value === "texto"){
+        applyType("texto", current || "Vacaciones");
+      }else{
+        applyType("numero", current);
+      }
+    });
+
+    row.appendChild(label);
+    row.appendChild(typeWrap);
+    row.appendChild(inputWrap);
+    planModalList.appendChild(row);
+  });
+
+  planModalBack.style.display = "flex";
+}
+
+planModalSave?.addEventListener("click", async ()=>{
+  if(!planModalResp) return;
+  const rows = Array.from(planModalList.querySelectorAll(".plan-modal-row"));
+  if(!rows.length){ closePlanModal(); return; }
+
+  const updates = [];
+  for(const row of rows){
+    const date = row.dataset.date;
+    const select = row.querySelector("select");
+    const input = row.querySelector(".plan-value-field");
+    if(!date || !select || !input) continue;
+    const mode = select.value === "texto" ? "texto" : "numero";
+    if(mode === "numero"){
+      const raw = input.value === "" ? "0" : input.value;
+      const num = Number(raw);
+      if(!Number.isFinite(num) || num < 0){
+        alert(`Valor inválido para ${date}. Debe ser un número mayor o igual a 0.`);
+        return;
+      }
+      updates.push({ fecha: date, tipo:"numero", valor: num });
+    }else{
+      const text = (input.value || "Vacaciones").trim();
+      updates.push({ fecha: date, tipo:"texto", valor: text || "Vacaciones" });
+    }
+  }
+
+  const currentData = window._planCounts?.[planModalResp] || {};
+  const pending = updates.filter(item=>{
+    const existing = currentData[item.fecha] || { tipo:"numero", valor:0 };
+    if(existing.tipo === item.tipo){
+      if(item.tipo === "numero") return Number(existing.valor) !== Number(item.valor);
+      return (existing.valor || "").toString() !== (item.valor || "").toString();
+    }
+    return true;
+  });
+
+  if(!pending.length){
+    closePlanModal();
+    rpStatus.textContent = "Sin cambios.";
+    return;
+  }
+
+  planModalSave.disabled = true;
+  planModalSave.textContent = "Guardando…";
+  try{
+    for(const item of pending){
+      await savePlan(planModalResp, item.fecha, item.valor, item.tipo);
+    }
+    closePlanModal();
+    rpStatus.textContent = "Planificado guardado ✓";
+    await runReport();
+  }catch(err){
+    console.error(err);
+    alert("❌ Error al guardar planificado");
+    planModalSave.disabled = false;
+    planModalSave.textContent = "Guardar cambios";
+  }
+});
+
+/** ====== DRAWER REPORTE (por UNIR) ====== **/
+const drawer   = document.getElementById("reportDrawer");
+const btnOpen  = document.getElementById("btnReport");
+const btnClose = document.getElementById("rp_close");
+const rpStart  = document.getElementById("rp_start");
+const rpEnd    = document.getElementById("rp_end");
+const rpRun    = document.getElementById("rp_run");
+const rpStatus = document.getElementById("rp_status");
+const rpChips  = document.getElementById("rp_chips");
+const rpTable  = document.getElementById("rp_table");
+const rpDetail = document.getElementById("rp_detail");
+const rpToggle = document.getElementById("rp_toggleEdit");
+let rpChart = null;
+let rpEditMode = false;
+
+btnOpen.addEventListener("click", openReport);
+btnClose.addEventListener("click", closeReport);
+
+function openReport(){
+  defaultReportDates();
+  hydrateRespChips().then(()=> runReport());
+  drawer.classList.add("open");
+  drawer.setAttribute("aria-hidden","false");
+}
+function closeReport(){
+  drawer.classList.remove("open");
+  drawer.setAttribute("aria-hidden","true");
+}
+rpRun.addEventListener("click", runReport);
+rpToggle.addEventListener("click", ()=>{ rpEditMode = !rpEditMode; rpToggle.textContent = rpEditMode ? "Salir de edición" : "Editar Planificado"; runReport(); });
+
+function dateKey(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; }
+function buildDays(from, to){ const a=[]; const cur=new Date(from); while(cur<=to){ a.push(new Date(cur)); cur.setDate(cur.getDate()+1);} return a; }
+function defaultReportDates(){
+  const today = new Date();
+  let year = today.getFullYear();
+  const startOct = new Date(year, 9, 2);
+  if(today < startOct){
+    year = year - 1;
+  }
+  const start = new Date(year, 9, 2);
+  const end = new Date(year, 9, 31);
+  rpStart.value = dateKey(start);
+  rpEnd.value = dateKey(end);
+}
+async function hydrateRespChips(){
+  const { data, error } = await client.from("cod_pred").select("responsable").not("responsable","is",null);
+  if(error) return;
+
+  const set = new Set((data||[]).map(r => (r.responsable||"").toString().trim().toLowerCase()).filter(Boolean));
+  rpChips.innerHTML = "";
+  if(set.size===0){ rpChips.innerHTML = `<span class="muted">No hay responsables registrados.</span>`; return; }
+  [...set].sort().forEach(name=>{
+    const id = "rp_chk_"+name.replace(/\s+/g,'_');
+    const cap = name.replace(/\b\w/g, m=>m.toUpperCase());
+    const lbl = document.createElement("label");
+    lbl.className = "chip active";
+    lbl.innerHTML = `<input id="${id}" type="checkbox" class="rp-resp" value="${name}" checked> ${cap}`;
+    lbl.querySelector("input").addEventListener("change",(e)=> lbl.classList.toggle("active", e.target.checked));
+    rpChips.appendChild(lbl);
+  });
+}
+function selectedResp(){
+  const set = new Set();
+  document.querySelectorAll(".rp-resp:checked").forEach(cb=> set.add(cb.value));
+  return set;
+}
+
+// Tabla 'plan_pred' (responsable, fecha, valor)
+async function fetchPlan(start, end){
+  const { data, error } = await client.from("plan_pred")
+    .select("responsable,fecha,valor")
+    .gte("fecha", start).lte("fecha", end);
+  if(error){ console.warn("plan_pred:", error.message); return []; }
+  return data||[];
+}
+
+async function savePlan(resp, fecha, valor, tipo="numero"){
+  const payload = { responsable: resp, fecha };
+  if(tipo === "texto"){
+    payload.valor = (valor ?? "").toString();
+  }else{
+    payload.valor = Number(valor) || 0;
+  }
+  const { error } = await client.from("plan_pred")
+    .upsert(payload, { onConflict: "responsable,fecha" });
+  if(error) throw error;
+}
+
+async function runReport(){
+  if(!rpStart || !rpEnd || !rpStatus || !rpDetail || !rpTable) return;
+  const start = rpStart.value, end = rpEnd.value;
+  if(!start || !end){ alert("Selecciona fechas"); return; }
+  const allowed = selectedResp(); // vacío => todos
+
+async function savePlan(resp, fecha, valor, tipo="numero"){
+  const payload = { responsable: resp, fecha };
+  if(tipo === "texto"){
+    payload.valor = (valor ?? "").toString();
+  }else{
+    payload.valor = Number(valor) || 0;
+  }
+  const { error } = await client.from("plan_pred")
+    .upsert(payload, { onConflict: "responsable,fecha" });
+  if(error) throw error;
+}
+
+async function runReport(){
+  const start = rpStart.value, end = rpEnd.value;
+  if(!start || !end){ alert("Selecciona fechas"); return; }
+  const allowed = selectedResp(); // vacío => todos
+
+
+  rpStatus.textContent = "Cargando…";
+  rpDetail.style.display = "none"; rpDetail.innerHTML = "";
+
+  // Trae filas del rango (usamos responsables/fecha_elab comunes)
+  let { data, error } = await client
+    .from("cod_pred")
+    .select("unir,cod_prel,codigo_mtc,comunidad,responsable,fecha_elab")
+    .not("fecha_elab","is",null)
+    .gte("fecha_elab", start)
+    .lte("fecha_elab", end);
+  if(error){ rpStatus.textContent = "Error: "+error.message; return; }
+
+  // Deduplicar por UNIR y armar lista de códigos por grupo
+  const groups = new Map(); // unir -> {responsable, fecha, comunidad, codigo_mtc, unirId, cods:[]}
+  (data||[]).forEach(r=>{
+    const resp = (r.responsable||"").toString().trim().toLowerCase();
+    if(allowed.size && !allowed.has(resp)) return;
+    const key = r.unir;
+    if(key == null) return;
+    if(!groups.has(key)){
+      groups.set(key, {
+        responsable: resp,
+        fecha: (r.fecha_elab||"").toString().slice(0,10),
+        comunidad: r.comunidad||"",
+        codigo_mtc: r.codigo_mtc||"",
+        unirId: key,
+        cods: []
+      });
+    }
+    groups.get(key).cods.push(r.cod_prel||"");
+  });
+
+
+  // Días del rango
+  const dFrom = new Date(start), dTo = new Date(end);
+  const days = buildDays(dFrom, dTo);
+  const dKeys = days.map(dateKey);
+
+  // Responsables activos (incluye planificados sin avance)
+  const respSet = new Set([...groups.values()].map(g=>g.responsable).filter(Boolean));
+
+  // Traer planificado y volcar al mapa
+  const planRows = await fetchPlan(start, end);
+  (planRows||[]).forEach(p=>{
+    const resp = (p.responsable||"").toString().trim().toLowerCase();
+    if(!resp) return;
+    if(allowed.size && !allowed.has(resp)) return;
+    respSet.add(resp);
+  });
+
+  const resps = [...respSet].sort();
+
+  // Contadores: elaborado por día (por UNIR), plan desde plan_pred
+  const doneCounts = {}; const planCounts = {};
+  resps.forEach(r=>{
+    doneCounts[r] = Object.fromEntries(dKeys.map(k=>[k,0]));
+    planCounts[r] = Object.fromEntries(dKeys.map(k=>[k,{ tipo:"numero", valor:0 }]));
+  });
+
+  // Mapa de celdas para detalle
+  const cellMapDone = new Map(); // `${resp}|${day}` -> array de grupos {comunidad,codigo_mtc,unirId,cods[]}
+
+  // Llenar 'done' (uno por UNIR)
+  groups.forEach(g=>{
+    const r = g.responsable; const k = g.fecha;
+    if(!r || !k || !(k in (doneCounts[r]||{}))) return;
+    doneCounts[r][k] += 1;
+    const ck = `${r}|${k}`; if(!cellMapDone.has(ck)) cellMapDone.set(ck, []);
+    cellMapDone.get(ck).push({ comunidad: g.comunidad, codigo_mtc: g.codigo_mtc, unirId: g.unirId, cods: g.cods });
+  });
+
+  (planRows||[]).forEach(p=>{
+    const r = (p.responsable||"").toString().trim().toLowerCase();
+    const k = (p.fecha||"").toString().slice(0,10);
+    if(!r || !k || !planCounts[r] || !dKeys.includes(k)) return;
+    if(allowed.size && !allowed.has(r)) return;
+    planCounts[r][k] = parsePlanValue(p.valor);
+  });
+
+  window._planCounts = planCounts;
+  window._planDays = dKeys;
+
+  // Días del rango
+  const dFrom = new Date(start), dTo = new Date(end);
+  const days = buildDays(dFrom, dTo);
+  const dKeys = days.map(dateKey);
+
+  // Responsables activos (incluye planificados sin avance)
+  const respSet = new Set([...groups.values()].map(g=>g.responsable).filter(Boolean));
+
+  // Traer planificado y volcar al mapa
+  const planRows = await fetchPlan(start, end);
+  (planRows||[]).forEach(p=>{
+    const resp = (p.responsable||"").toString().trim().toLowerCase();
+    if(!resp) return;
+    if(allowed.size && !allowed.has(resp)) return;
+    respSet.add(resp);
+  });
+
+  const resps = [...respSet].sort();
+
+  // Contadores: elaborado por día (por UNIR), plan desde plan_pred
+  const doneCounts = {}; const planCounts = {};
+  resps.forEach(r=>{
+    doneCounts[r] = Object.fromEntries(dKeys.map(k=>[k,0]));
+    planCounts[r] = Object.fromEntries(dKeys.map(k=>[k,{ tipo:"numero", valor:0 }]));
+  });
+
+  // Mapa de celdas para detalle
+  const cellMapDone = new Map(); // `${resp}|${day}` -> array de grupos {comunidad,codigo_mtc,unirId,cods[]}
+
+  // Llenar 'done' (uno por UNIR)
+  groups.forEach(g=>{
+    const r = g.responsable; const k = g.fecha;
+    if(!r || !k || !(k in (doneCounts[r]||{}))) return;
+    doneCounts[r][k] += 1;
+    const ck = `${r}|${k}`; if(!cellMapDone.has(ck)) cellMapDone.set(ck, []);
+    cellMapDone.get(ck).push({ comunidad: g.comunidad, codigo_mtc: g.codigo_mtc, unirId: g.unirId, cods: g.cods });
+  });
+
+  (planRows||[]).forEach(p=>{
+    const r = (p.responsable||"").toString().trim().toLowerCase();
+    const k = (p.fecha||"").toString().slice(0,10);
+    if(!r || !k || !planCounts[r] || !dKeys.includes(k)) return;
+    if(allowed.size && !allowed.has(r)) return;
+    planCounts[r][k] = parsePlanValue(p.valor);
+  });
+
+
+  window._planCounts = planCounts;
+  window._planDays = dKeys;
+
+  // KPIs
+  const totalDone = [...groups.values()].length;
+  document.getElementById("kpi_total").textContent = totalDone;
+  document.getElementById("kpi_resps").textContent = resps.length;
+
+  // Render tabla
+
+  let tableHtml = "<tr>";
+  tableHtml += `<th class="sticky l1">RESPONSABLE</th>`;
+  dKeys.forEach(k=>{
+    const d = new Date(k);
+    const dayIdx = d.getDay();
+    const classes = dayIdx === 0 ? "day-head sunday" : "day-head";
+    tableHtml += `<th class="${classes}">${String(d.getDate()).padStart(2,'0')}<div class="muted">${["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][dayIdx]}</div></th>`;
+  });
+  tableHtml += `<th>Total</th></tr>`;
+
+  resps.forEach(r=>{
+    // Fila plan
+    tableHtml += `<tr>`;
+    if(rpEditMode){
+      tableHtml += `<td class="sticky l1"><div><b>${cap(r)}</b> — <span class="muted">Planificado</span></div></td>`;
+    }else{
+      tableHtml += `<td class="sticky l1"><div class="plan-header"><div><b>${cap(r)}</b> — <span class="muted">Planificado</span></div><button type="button" class="btn-small plan-bulk-btn" data-resp="${r}">Actualizar avance diario</button></div></td>`;
+    }
+    let rowPlan = 0;
+    dKeys.forEach(k=>{
+      const entry = planCounts[r][k] || { tipo:"numero", valor:0 };
+      const dayIdx = new Date(k).getDay();
+      const dayClass = dayIdx === 0 ? "sunday" : "";
+      if(entry.tipo === "texto"){
+        if(rpEditMode){
+          tableHtml += `<td class="${dayClass}"><input class="ovr-input" data-resp="${r}" data-date="${k}" data-type="texto" type="text" value="${esc(entry.valor)}"></td>`;
+        }else{
+          tableHtml += `<td class="${dayClass}"><span class="plan-text">${esc(entry.valor)}</span></td>`;
+        }
+      }else{
+        const numVal = Number(entry.valor) || 0;
+        rowPlan += numVal;
+        if(rpEditMode){
+          tableHtml += `<td class="${dayClass}"><input class="ovr-input" data-resp="${r}" data-date="${k}" data-type="numero" type="number" min="0" value="${numVal}"></td>`;
+        }else{
+          tableHtml += `<td class="${dayClass}">${numVal}</td>`;
+        }
+      }
+    });
+    tableHtml += `<td><b>${rowPlan}</b></td>`;
+    tableHtml += `</tr>`;
+
+    // Fila elaborado
+    tableHtml += `<tr>`;
+    tableHtml += `<td class="sticky l1"><b>${cap(r)}</b> — <span class="muted">Elaborado</span></td>`;
+    let rowDone = 0;
+    dKeys.forEach(k=>{
+      const n = doneCounts[r]?.[k] || 0; rowDone += n;
+      const dayIdx = new Date(k).getDay();
+      const dayClass = dayIdx === 0 ? "sunday" : "";
+      if(n>0){
+        tableHtml += `<td class="clickable ${dayClass}" onclick="openRpCell('${r}','${k}')"><b>${n}</b></td>`;
+      }else{
+        tableHtml += `<td class="${dayClass} muted">0</td>`;
+      }
+    });
+    tableHtml += `<td><b>${rowDone}</b></td>`;
+    tableHtml += `</tr>`;
+  });
+
+  rpTable.innerHTML = tableHtml;
+
+  if(!rpEditMode){
+    rpTable.querySelectorAll(".plan-bulk-btn").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const resp = btn.getAttribute("data-resp");
+        if(resp) openPlanModal(resp);
+      });
+    });
+  }
+
+  // Guardado inline de planificado
+  rpTable.querySelectorAll(".ovr-input").forEach(inp=>{
+    inp.addEventListener("change", async (e)=>{
+      const resp = e.target.getAttribute("data-resp");
+      const fecha = e.target.getAttribute("data-date");
+      if(!resp || !fecha) return;
+      const tipo = e.target.dataset.type === "texto" ? "texto" : (e.target.type === "text" ? "texto" : "numero");
+      try{
+        let valor;
+        if(tipo === "texto"){
+          valor = (e.target.value || "Vacaciones").trim() || "Vacaciones";
+        }else{
+          const raw = e.target.value === "" ? "0" : e.target.value;
+          const num = Number(raw);
+          if(!Number.isFinite(num) || num < 0){
+            alert("Ingresa un número válido (0 o mayor)");
+            const prev = window._planCounts?.[resp]?.[fecha];
+            e.target.value = Number(prev?.valor || 0);
+            return;
+          }
+          valor = num;
+        }
+        await savePlan(resp, fecha, valor, tipo);
+        rpStatus.textContent = "Planificado guardado ✓";
+        if(!window._planCounts) window._planCounts = {};
+        if(!window._planCounts[resp]) window._planCounts[resp] = {};
+        window._planCounts[resp][fecha] = { tipo, valor };
+      }catch(err){
+        console.error(err);
+        rpStatus.textContent = "Error al guardar planificado";
+      }
+    });
+  });
+
+
+  let html = "<tr>";
+  html += `<th class="sticky l1">RESPONSABLE</th>`;
+  dKeys.forEach(k=>{
+    const d = new Date(k);
+    const dayIdx = d.getDay();
+    const classes = dayIdx === 0 ? "day-head sunday" : "day-head";
+    html += `<th class="${classes}">${String(d.getDate()).padStart(2,'0')}<div class="muted">${["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][dayIdx]}</div></th>`;
+  });
+  html += `<th>Total</th></tr>`;
+
+  resps.forEach(r=>{
+    // Fila plan
+    html += `<tr>`;
+    if(rpEditMode){
+      html += `<td class="sticky l1"><div><b>${cap(r)}</b> — <span class="muted">Planificado</span></div></td>`;
+    }else{
+      html += `<td class="sticky l1"><div class="plan-header"><div><b>${cap(r)}</b> — <span class="muted">Planificado</span></div><button type="button" class="btn-small plan-bulk-btn" data-resp="${r}">Actualizar avance diario</button></div></td>`;
+    }
+    let rowPlan = 0;
+    dKeys.forEach(k=>{
+      const entry = planCounts[r][k] || { tipo:"numero", valor:0 };
+      const dayIdx = new Date(k).getDay();
+      const dayClass = dayIdx === 0 ? "sunday" : "";
+      if(entry.tipo === "texto"){
+        if(rpEditMode){
+          html += `<td class="${dayClass}"><input class="ovr-input" data-resp="${r}" data-date="${k}" data-type="texto" type="text" value="${esc(entry.valor)}"></td>`;
+        }else{
+          html += `<td class="${dayClass}"><span class="plan-text">${esc(entry.valor)}</span></td>`;
+        }
+      }else{
+        const numVal = Number(entry.valor) || 0;
+        rowPlan += numVal;
+        if(rpEditMode){
+          html += `<td class="${dayClass}"><input class="ovr-input" data-resp="${r}" data-date="${k}" data-type="numero" type="number" min="0" value="${numVal}"></td>`;
+        }else{
+          html += `<td class="${dayClass}">${numVal}</td>`;
+        }
+      }
+    });
+    html += `<td><b>${rowPlan}</b></td>`;
+    html += `</tr>`;
+
+    // Fila elaborado
+    html += `<tr>`;
+    html += `<td class="sticky l1"><b>${cap(r)}</b> — <span class="muted">Elaborado</span></td>`;
+    let rowDone = 0;
+    dKeys.forEach(k=>{
+      const n = doneCounts[r]?.[k] || 0; rowDone += n;
+      const dayIdx = new Date(k).getDay();
+      const dayClass = dayIdx === 0 ? "sunday" : "";
+      if(n>0){
+        html += `<td class="clickable ${dayClass}" onclick="openRpCell('${r}','${k}')"><b>${n}</b></td>`;
+      }else{
+        html += `<td class="${dayClass} muted">0</td>`;
+      }
+    });
+    html += `<td><b>${rowDone}</b></td>`;
+    html += `</tr>`;
+  });
+
+  rpTable.innerHTML = html;
+
+  if(!rpEditMode){
+    rpTable.querySelectorAll(".plan-bulk-btn").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const resp = btn.getAttribute("data-resp");
+        if(resp) openPlanModal(resp);
+      });
+    });
+  }
+
+
+  let html = "<tr>";
+  html += `<th class="sticky l1">RESPONSABLE</th>`;
+  dKeys.forEach(k=>{
+    const d = new Date(k);
+    html += `<th>${String(d.getDate()).padStart(2,'0')}<div class="muted">${["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][d.getDay()]}</div></th>`;
+  });
+  html += `<th>Total</th></tr>`;
+
+  resps.forEach(r=>{
+    // Fila plan
+    html += `<tr>`;
+    html += `<td class="sticky l1"><b>${cap(r)}</b> — <span class="muted">Planificado</span></td>`;
+    let rowPlan = 0;
+    dKeys.forEach(k=>{
+      const val = planCounts[r][k] || 0; rowPlan += val;
+      if(rpEditMode){
+        html += `<td><input class="ovr-input" data-resp="${r}" data-date="${k}" type="number" min="0" value="${val}"></td>`;
+      }else{
+        html += `<td><span class="plan-cell"><span class="plan-value" data-resp="${r}" data-date="${k}">${val}</span><button type="button" class="plan-edit-btn" data-resp="${r}" data-date="${k}" data-val="${val}">✏️</button></span></td>`;
+      }
+    });
+    html += `<td><b>${rowPlan}</b></td>`;
+    html += `</tr>`;
+
+    // Fila elaborado
+    html += `<tr>`;
+    html += `<td class="sticky l1"><b>${cap(r)}</b> — <span class="muted">Elaborado</span></td>`;
+    let rowDone = 0;
+    dKeys.forEach(k=>{
+      const n = doneCounts[r][k] || 0; rowDone += n;
+      if(n>0){
+        html += `<td class="clickable" onclick="openRpCell('${r}','${k}')"><b>${n}</b></td>`;
+      }else{
+        html += `<td class="muted">0</td>`;
+      }
+    });
+    html += `<td><b>${rowDone}</b></td>`;
+    html += `</tr>`;
+  });
+
+  rpTable.innerHTML = html;
+
+
+  // Guardado inline de planificado
+  rpTable.querySelectorAll(".ovr-input").forEach(inp=>{
+    inp.addEventListener("change", async (e)=>{
+      const resp = e.target.getAttribute("data-resp");
+      const fecha = e.target.getAttribute("data-date");
+
+      if(!resp || !fecha) return;
+      const tipo = e.target.dataset.type === "texto" ? "texto" : (e.target.type === "text" ? "texto" : "numero");
+      try{
+        let valor;
+        if(tipo === "texto"){
+          valor = (e.target.value || "Vacaciones").trim() || "Vacaciones";
+        }else{
+          const raw = e.target.value === "" ? "0" : e.target.value;
+          const num = Number(raw);
+          if(!Number.isFinite(num) || num < 0){
+            alert("Ingresa un número válido (0 o mayor)");
+            const prev = window._planCounts?.[resp]?.[fecha];
+            e.target.value = Number(prev?.valor || 0);
+            return;
+          }
+          valor = num;
+        }
+        await savePlan(resp, fecha, valor, tipo);
+        rpStatus.textContent = "Planificado guardado ✓";
+        if(!window._planCounts) window._planCounts = {};
+        if(!window._planCounts[resp]) window._planCounts[resp] = {};
+        window._planCounts[resp][fecha] = { tipo, valor };
+
+      const valor = Number(e.target.value)||0;
+      try{
+        await savePlan(resp, fecha, valor);
+        rpStatus.textContent = "Planificado guardado ✓";
+
+      }catch(err){
+        console.error(err);
+        rpStatus.textContent = "Error al guardar planificado";
+      }
+    });
+  });
+
+
+
+  rpTable.querySelectorAll(".plan-edit-btn").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const resp = btn.getAttribute("data-resp");
+      const fecha = btn.getAttribute("data-date");
+      const current = Number(btn.getAttribute("data-val")||0);
+      const promptLabel = `Nuevo planificado para ${cap(resp)} — ${fecha}`;
+      const input = prompt(promptLabel, current);
+      if(input === null) return;
+      const parsed = Number(input);
+      if(!Number.isFinite(parsed) || parsed < 0){
+        alert("Ingresa un número válido (0 o mayor)");
+        return;
+      }
+      btn.disabled = true;
+      try{
+        await savePlan(resp, fecha, parsed);
+        rpStatus.textContent = "Planificado guardado ✓";
+        btn.setAttribute("data-val", parsed);
+        const container = btn.closest(".plan-cell");
+        const valueSpan = container?.querySelector(".plan-value");
+        if(valueSpan) valueSpan.textContent = parsed;
+      }catch(err){
+        console.error(err);
+        alert("❌ Error al guardar planificado");
+      }finally{
+        btn.disabled = false;
+      }
+    });
+  });
+
+
+  // Gráfico de totales diarios (elaborado por UNIR)
+
+  const totals = dKeys.map(k => resps.reduce((acc,r)=> acc + (doneCounts[r]?.[k]||0), 0));
+
+  const totals = dKeys.map(k => resps.reduce((acc,r)=> acc + (doneCounts[r]?.[k]||0), 0));
+
+  renderReportChart(dKeys, totals);
+
+  // Exponer mapa para detalle
+  window._rp_cellMapDone = cellMapDone;
+
+  rpStatus.textContent = "Listo.";
+}
+
+// Detalle de una celda (lista de grupos UNIR con sus códigos clicables)
+window.openRpCell = function(resp, ymd){
+  const list = (window._rp_cellMapDone?.get(`${resp}|${ymd}`)) || [];
+  const rows = list.map(g=>{
+    const codes = g.cods.map(c=>`<button class="code-link" data-code="${esc(c)}" data-unir="${g.unirId}">${esc(c)}</button>`).join("");
+    return `
+      <tr>
+        <td>${esc(g.comunidad)}</td>
+        <td>${esc(g.codigo_mtc)}</td>
+        <td style="text-align:left">${codes}</td>
+      </tr>`;
+  }).join("");
+  rpDetail.innerHTML = `
+    <div class="label">Detalle — ${cap(resp)} — ${ymd}</div>
+    <div style="overflow:auto"><table class="report" style="width:100%">
+      <thead><tr><th>Comunidad</th><th>Código MTC</th><th>cod_prel (grupo UNIR)</th></tr></thead>
+      <tbody>${rows || `<tr><td colspan="3" class="muted">Sin grupos</td></tr>`}</tbody>
+    </table></div>`;
+  rpDetail.style.display = "block";
+};
+
+async function selectFromReport(unir, cod){
+  await showGroup(Number(unir));
+  selectedCodPrel = cod;
+  focusByCodPrel(cod);
+  highlightGroup(Number(unir), false);
+  // Resaltar tarjeta del área
+  const card = Array.from(listAreas.querySelectorAll(".area-card")).find(el => el.getAttribute("data-cod") === cod);
+  if(card){
+    card.classList.add("flash");
+    card.scrollIntoView({ behavior:"smooth", block:"center" });
+    setTimeout(()=> card.classList.remove("flash"), 1200);
+  }
+}
+
+function renderReportChart(dKeys, totals){
+  const wrap = document.getElementById("chartWrap");
+  const canvas = document.getElementById("rp_chart");
+  if(!wrap || !canvas) return;
+  const ctx = canvas.getContext("2d");
+  if(!ctx) return;
+  wrap.style.display = "block";
+  if(rpChart) rpChart.destroy();
+  rpChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: dKeys.map(k => { const d = new Date(k); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`; }),
+      datasets: [{ label: 'Elaborados por día (UNIR)', data: totals }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } }
+  });
+
+}
+
+function esc(s){ return (s??"").toString().replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+function cap(r){ return (r||"").replace(/\b\w/g,m=>m.toUpperCase()); }
+function parsePlanValue(raw){
+  if(raw === null || raw === undefined) return { tipo:"numero", valor:0 };
+  const str = raw.toString();
+  if(str.trim() === "") return { tipo:"numero", valor:0 };
+  const num = Number(str);
+  if(Number.isFinite(num)) return { tipo:"numero", valor:num };
+  return { tipo:"texto", valor:str };
+}
+
+async function initReportSection(){
+  await injectReportDrawer();
+  setupReportElements();
+}
+
+/** ====== RESIZER ====== **/
+(function initGutter(){
+
+}
+
+function esc(s){ return (s??"").toString().replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+function cap(r){ return (r||"").replace(/\b\w/g,m=>m.toUpperCase()); }
+function parsePlanValue(raw){
+  if(raw === null || raw === undefined) return { tipo:"numero", valor:0 };
+  const str = raw.toString();
+  if(str.trim() === "") return { tipo:"numero", valor:0 };
+  const num = Number(str);
+  if(Number.isFinite(num)) return { tipo:"numero", valor:num };
+  return { tipo:"texto", valor:str };
+}
+
+/** ====== RESIZER ====== **/
+(function initGutter(){
+
+  const left = document.getElementById("leftPane");
+  const gutter = document.getElementById("gutter");
+  let dragging=false, startX=0, startLeft=0;
+  gutter.addEventListener("mousedown",(e)=>{
+    dragging=true; startX=e.clientX; startLeft=left.getBoundingClientRect().width;
+    document.body.style.userSelect="none";
+  });
+  window.addEventListener("mousemove",(e)=>{
+    if(!dragging) return;
+    const dx = e.clientX - startX;
+    const newW = Math.max(280, Math.min(window.innerWidth-280, startLeft + dx));
+    const percent = (newW / window.innerWidth) * 100;
+    left.style.flexBasis = percent + "%";
+    setTimeout(()=> map.invalidateSize(), 0);
+  });
+  window.addEventListener("mouseup",()=>{ dragging=false; document.body.style.userSelect=""; });
+})();
+
+/** ====== INIT ====== **/
+(async function init(){
+  await hydrateLookups();
+  await initReportSection();
+  await loadAllPredios();
+})();
+</script>
+</body>
+</html>
+
