@@ -703,16 +703,6 @@ function openAreaModal(cod){
   modalAreaBack.style.display = "flex";
   client.from("cod_pred").select("*").eq("cod_prel",cod).single().then(({data})=>{
 
-const modalAreaBack = document.getElementById("modalAreaBack");
-const planModalBack = document.getElementById("planModalBack");
-const planModalTitle = document.getElementById("planModalTitle");
-const planModalList = document.getElementById("planModalList");
-const planModalSave = document.getElementById("planModalSave");
-let planModalResp = null;
-function openAreaModal(cod){
-  modalAreaBack.style.display = "flex";
-  client.from("cod_pred").select("*").eq("cod_prel",cod).single().then(({data})=>{
-
     if(!data) return;
     setVal("a_cod_prel", data.cod_prel ?? "");
     setVal("a_area", data.area ?? "");
@@ -731,15 +721,6 @@ async function saveArea(){
   const cod = document.getElementById("a_cod_prel").value;
   const update = {
     area: valOrNull("a_area"),
-
-}
-function closeAreaModal(){ modalAreaBack.style.display = "none"; }
-function closePlanModal(){ planModalBack.style.display = "none"; planModalResp = null; planModalList.innerHTML = ""; planModalSave.disabled = false; planModalSave.textContent = "Guardar cambios"; }
-async function saveArea(){
-  const cod = document.getElementById("a_cod_prel").value;
-  const update = {
-    area: valOrNull("a_area"),
-
     perimetro_suma: valOrNull("a_perimetro"),
     prog_ini: valOrNull("a_prog_ini"),
     prog_fin: valOrNull("a_prog_fin"),
@@ -765,7 +746,7 @@ function openPlanModal(resp){
   planModalList.innerHTML = "";
 
   days.forEach(day=>{
-    const entry = data[day] || { tipo:"numero", valor:0 };
+    const entry = Number(data[day]) || 0;
     const row = document.createElement("div");
     row.className = "plan-modal-row" + (new Date(day).getDay() === 0 ? " sunday" : "");
     row.dataset.date = day;
@@ -777,40 +758,16 @@ function openPlanModal(resp){
     label.innerHTML = `<span>${day}</span><small>${weekday}</small>`;
 
     const typeWrap = document.createElement("div");
-    const select = document.createElement("select");
-    select.innerHTML = `<option value="numero">Número</option><option value="texto">Texto</option>`;
-    select.value = entry.tipo === "texto" ? "texto" : "numero";
-    typeWrap.appendChild(select);
+    typeWrap.className = "muted";
+    typeWrap.textContent = "Número";
 
     const inputWrap = document.createElement("div");
     const input = document.createElement("input");
-    const applyType = (type, value)=>{
-      if(type === "numero"){
-        input.type = "number";
-        input.min = "0";
-        input.value = Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : 0;
-      }else{
-        input.type = "text";
-        input.removeAttribute("min");
-        input.value = value ? value.toString() : "Vacaciones";
-      }
-    };
-    if(select.value === "texto"){
-      applyType("texto", entry.tipo === "texto" ? entry.valor : "Vacaciones");
-    }else{
-      applyType("numero", entry.tipo === "numero" ? entry.valor : 0);
-    }
+    input.type = "number";
+    input.min = "0";
+    input.value = entry;
     input.className = "plan-value-field";
     inputWrap.appendChild(input);
-
-    select.addEventListener("change",()=>{
-      const current = input.value;
-      if(select.value === "texto"){
-        applyType("texto", current || "Vacaciones");
-      }else{
-        applyType("numero", current);
-      }
-    });
 
     row.appendChild(label);
     row.appendChild(typeWrap);
@@ -829,32 +786,21 @@ planModalSave?.addEventListener("click", async ()=>{
   const updates = [];
   for(const row of rows){
     const date = row.dataset.date;
-    const select = row.querySelector("select");
     const input = row.querySelector(".plan-value-field");
-    if(!date || !select || !input) continue;
-    const mode = select.value === "texto" ? "texto" : "numero";
-    if(mode === "numero"){
-      const raw = input.value === "" ? "0" : input.value;
-      const num = Number(raw);
-      if(!Number.isFinite(num) || num < 0){
-        alert(`Valor inválido para ${date}. Debe ser un número mayor o igual a 0.`);
-        return;
-      }
-      updates.push({ fecha: date, tipo:"numero", valor: num });
-    }else{
-      const text = (input.value || "Vacaciones").trim();
-      updates.push({ fecha: date, tipo:"texto", valor: text || "Vacaciones" });
+    if(!date || !input) continue;
+    const raw = input.value === "" ? "0" : input.value;
+    const num = Number(raw);
+    if(!Number.isFinite(num) || num < 0){
+      alert(`Valor inválido para ${date}. Debe ser un número mayor o igual a 0.`);
+      return;
     }
+    updates.push({ fecha: date, valor: num });
   }
 
   const currentData = window._planCounts?.[planModalResp] || {};
   const pending = updates.filter(item=>{
-    const existing = currentData[item.fecha] || { tipo:"numero", valor:0 };
-    if(existing.tipo === item.tipo){
-      if(item.tipo === "numero") return Number(existing.valor) !== Number(item.valor);
-      return (existing.valor || "").toString() !== (item.valor || "").toString();
-    }
-    return true;
+    const existing = Number(currentData[item.fecha]) || 0;
+    return Number(existing) !== Number(item.valor);
   });
 
   if(!pending.length){
@@ -867,7 +813,7 @@ planModalSave?.addEventListener("click", async ()=>{
   planModalSave.textContent = "Guardando…";
   try{
     for(const item of pending){
-      await savePlan(planModalResp, item.fecha, item.valor, item.tipo);
+      await savePlan(planModalResp, item.fecha, item.valor);
     }
     closePlanModal();
     rpStatus.textContent = "Planificado guardado ✓";
@@ -881,7 +827,7 @@ planModalSave?.addEventListener("click", async ()=>{
 });
 
 /** ====== DRAWER REPORTE (por UNIR) ====== **/
-let drawer = null;
+let reportDrawerEl = null;
 let rpStart = null;
 let rpEnd = null;
 let rpRun = null;
@@ -912,7 +858,7 @@ async function injectReportDrawer(){
 function setupReportElements(){
   const btnOpen = document.getElementById("btnReport");
   const btnClose = document.getElementById("rp_close");
-  drawer = document.getElementById("reportDrawer");
+  reportDrawerEl = document.getElementById("reportDrawer");
   rpStart = document.getElementById("rp_start");
   rpEnd = document.getElementById("rp_end");
   rpRun = document.getElementById("rp_run");
@@ -922,7 +868,7 @@ function setupReportElements(){
   rpDetail = document.getElementById("rp_detail");
   rpToggle = document.getElementById("rp_toggleEdit");
 
-  if(!drawer || !rpStart || !rpEnd || !rpRun || !rpStatus || !rpChips || !rpTable || !rpDetail || !rpToggle){
+  if(!reportDrawerEl || !rpStart || !rpEnd || !rpRun || !rpStatus || !rpChips || !rpTable || !rpDetail || !rpToggle){
     btnOpen?.addEventListener("click", ()=> alert("No se pudo cargar el reporte. Intenta recargar la página."));
     console.warn("Reporte no inicializado: faltan elementos en el fragmento embebido.");
     return;
@@ -946,16 +892,16 @@ function setupReportElements(){
 }
 
 function openReport(){
-  if(!drawer) return;
+  if(!reportDrawerEl) return;
   defaultReportDates();
   hydrateRespChips().then(()=> runReport());
-  drawer.classList.add("open");
-  drawer.setAttribute("aria-hidden","false");
+  reportDrawerEl.classList.add("open");
+  reportDrawerEl.setAttribute("aria-hidden","false");
 }
 function closeReport(){
-  if(!drawer) return;
-  drawer.classList.remove("open");
-  drawer.setAttribute("aria-hidden","true");
+  if(!reportDrawerEl) return;
+  reportDrawerEl.classList.remove("open");
+  reportDrawerEl.setAttribute("aria-hidden","true");
 }
 
 function dateKey(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; }
@@ -975,182 +921,6 @@ function defaultReportDates(){
 }
 async function hydrateRespChips(){
   if(!rpChips) return;
-  const { data, error } = await client.from("cod_pred").select("responsable").not("responsable","is",null);
-  if(error) return;
-
-  if(currentUnirId) highlightGroup(currentUnirId, false);
-}
-
-function openPlanModal(resp){
-  const pretty = cap(resp);
-  const days = window._planDays || [];
-  const data = window._planCounts?.[resp] || {};
-  planModalResp = resp;
-  planModalTitle.textContent = `Actualizar avance diario — ${pretty}`;
-  planModalList.innerHTML = "";
-
-  days.forEach(day=>{
-    const entry = data[day] || { tipo:"numero", valor:0 };
-    const row = document.createElement("div");
-    row.className = "plan-modal-row" + (new Date(day).getDay() === 0 ? " sunday" : "");
-    row.dataset.date = day;
-
-    const label = document.createElement("div");
-    label.className = "plan-date";
-    const dateObj = new Date(day);
-    const weekday = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"][dateObj.getDay()];
-    label.innerHTML = `<span>${day}</span><small>${weekday}</small>`;
-
-    const typeWrap = document.createElement("div");
-    const select = document.createElement("select");
-    select.innerHTML = `<option value="numero">Número</option><option value="texto">Texto</option>`;
-    select.value = entry.tipo === "texto" ? "texto" : "numero";
-    typeWrap.appendChild(select);
-
-    const inputWrap = document.createElement("div");
-    const input = document.createElement("input");
-    const applyType = (type, value)=>{
-      if(type === "numero"){
-        input.type = "number";
-        input.min = "0";
-        input.value = Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : 0;
-      }else{
-        input.type = "text";
-        input.removeAttribute("min");
-        input.value = value ? value.toString() : "Vacaciones";
-      }
-    };
-    if(select.value === "texto"){
-      applyType("texto", entry.tipo === "texto" ? entry.valor : "Vacaciones");
-    }else{
-      applyType("numero", entry.tipo === "numero" ? entry.valor : 0);
-    }
-    input.className = "plan-value-field";
-    inputWrap.appendChild(input);
-
-    select.addEventListener("change",()=>{
-      const current = input.value;
-      if(select.value === "texto"){
-        applyType("texto", current || "Vacaciones");
-      }else{
-        applyType("numero", current);
-      }
-    });
-
-    row.appendChild(label);
-    row.appendChild(typeWrap);
-    row.appendChild(inputWrap);
-    planModalList.appendChild(row);
-  });
-
-  planModalBack.style.display = "flex";
-}
-
-planModalSave?.addEventListener("click", async ()=>{
-  if(!planModalResp) return;
-  const rows = Array.from(planModalList.querySelectorAll(".plan-modal-row"));
-  if(!rows.length){ closePlanModal(); return; }
-
-  const updates = [];
-  for(const row of rows){
-    const date = row.dataset.date;
-    const select = row.querySelector("select");
-    const input = row.querySelector(".plan-value-field");
-    if(!date || !select || !input) continue;
-    const mode = select.value === "texto" ? "texto" : "numero";
-    if(mode === "numero"){
-      const raw = input.value === "" ? "0" : input.value;
-      const num = Number(raw);
-      if(!Number.isFinite(num) || num < 0){
-        alert(`Valor inválido para ${date}. Debe ser un número mayor o igual a 0.`);
-        return;
-      }
-      updates.push({ fecha: date, tipo:"numero", valor: num });
-    }else{
-      const text = (input.value || "Vacaciones").trim();
-      updates.push({ fecha: date, tipo:"texto", valor: text || "Vacaciones" });
-    }
-  }
-
-  const currentData = window._planCounts?.[planModalResp] || {};
-  const pending = updates.filter(item=>{
-    const existing = currentData[item.fecha] || { tipo:"numero", valor:0 };
-    if(existing.tipo === item.tipo){
-      if(item.tipo === "numero") return Number(existing.valor) !== Number(item.valor);
-      return (existing.valor || "").toString() !== (item.valor || "").toString();
-    }
-    return true;
-  });
-
-  if(!pending.length){
-    closePlanModal();
-    rpStatus.textContent = "Sin cambios.";
-    return;
-  }
-
-  planModalSave.disabled = true;
-  planModalSave.textContent = "Guardando…";
-  try{
-    for(const item of pending){
-      await savePlan(planModalResp, item.fecha, item.valor, item.tipo);
-    }
-    closePlanModal();
-    rpStatus.textContent = "Planificado guardado ✓";
-    await runReport();
-  }catch(err){
-    console.error(err);
-    alert("❌ Error al guardar planificado");
-    planModalSave.disabled = false;
-    planModalSave.textContent = "Guardar cambios";
-  }
-});
-
-/** ====== DRAWER REPORTE (por UNIR) ====== **/
-const drawer   = document.getElementById("reportDrawer");
-const btnOpen  = document.getElementById("btnReport");
-const btnClose = document.getElementById("rp_close");
-const rpStart  = document.getElementById("rp_start");
-const rpEnd    = document.getElementById("rp_end");
-const rpRun    = document.getElementById("rp_run");
-const rpStatus = document.getElementById("rp_status");
-const rpChips  = document.getElementById("rp_chips");
-const rpTable  = document.getElementById("rp_table");
-const rpDetail = document.getElementById("rp_detail");
-const rpToggle = document.getElementById("rp_toggleEdit");
-let rpChart = null;
-let rpEditMode = false;
-
-btnOpen.addEventListener("click", openReport);
-btnClose.addEventListener("click", closeReport);
-
-function openReport(){
-  defaultReportDates();
-  hydrateRespChips().then(()=> runReport());
-  drawer.classList.add("open");
-  drawer.setAttribute("aria-hidden","false");
-}
-function closeReport(){
-  drawer.classList.remove("open");
-  drawer.setAttribute("aria-hidden","true");
-}
-rpRun.addEventListener("click", runReport);
-rpToggle.addEventListener("click", ()=>{ rpEditMode = !rpEditMode; rpToggle.textContent = rpEditMode ? "Salir de edición" : "Editar Planificado"; runReport(); });
-
-function dateKey(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; }
-function buildDays(from, to){ const a=[]; const cur=new Date(from); while(cur<=to){ a.push(new Date(cur)); cur.setDate(cur.getDate()+1);} return a; }
-function defaultReportDates(){
-  const today = new Date();
-  let year = today.getFullYear();
-  const startOct = new Date(year, 9, 2);
-  if(today < startOct){
-    year = year - 1;
-  }
-  const start = new Date(year, 9, 2);
-  const end = new Date(year, 9, 31);
-  rpStart.value = dateKey(start);
-  rpEnd.value = dateKey(end);
-}
-async function hydrateRespChips(){
   const { data, error } = await client.from("cod_pred").select("responsable").not("responsable","is",null);
   if(error) return;
 
@@ -1182,13 +952,12 @@ async function fetchPlan(start, end){
   return data||[];
 }
 
-async function savePlan(resp, fecha, valor, tipo="numero"){
-  const payload = { responsable: resp, fecha };
-  if(tipo === "texto"){
-    payload.valor = (valor ?? "").toString();
-  }else{
-    payload.valor = Number(valor) || 0;
-  }
+async function savePlan(resp, fecha, valor){
+  const payload = {
+    responsable: resp,
+    fecha,
+    valor: Number(valor) || 0
+  };
   const { error } = await client.from("plan_pred")
     .upsert(payload, { onConflict: "responsable,fecha" });
   if(error) throw error;
@@ -1199,24 +968,6 @@ async function runReport(){
   const start = rpStart.value, end = rpEnd.value;
   if(!start || !end){ alert("Selecciona fechas"); return; }
   const allowed = selectedResp(); // vacío => todos
-
-async function savePlan(resp, fecha, valor, tipo="numero"){
-  const payload = { responsable: resp, fecha };
-  if(tipo === "texto"){
-    payload.valor = (valor ?? "").toString();
-  }else{
-    payload.valor = Number(valor) || 0;
-  }
-  const { error } = await client.from("plan_pred")
-    .upsert(payload, { onConflict: "responsable,fecha" });
-  if(error) throw error;
-}
-
-async function runReport(){
-  const start = rpStart.value, end = rpEnd.value;
-  if(!start || !end){ alert("Selecciona fechas"); return; }
-  const allowed = selectedResp(); // vacío => todos
-
 
   rpStatus.textContent = "Cargando…";
   rpDetail.style.display = "none"; rpDetail.innerHTML = "";
@@ -1250,7 +1001,6 @@ async function runReport(){
     groups.get(key).cods.push(r.cod_prel||"");
   });
 
-
   // Días del rango
   const dFrom = new Date(start), dTo = new Date(end);
   const days = buildDays(dFrom, dTo);
@@ -1274,7 +1024,7 @@ async function runReport(){
   const doneCounts = {}; const planCounts = {};
   resps.forEach(r=>{
     doneCounts[r] = Object.fromEntries(dKeys.map(k=>[k,0]));
-    planCounts[r] = Object.fromEntries(dKeys.map(k=>[k,{ tipo:"numero", valor:0 }]));
+    planCounts[r] = Object.fromEntries(dKeys.map(k=>[k,0]));
   });
 
   // Mapa de celdas para detalle
@@ -1294,58 +1044,8 @@ async function runReport(){
     const k = (p.fecha||"").toString().slice(0,10);
     if(!r || !k || !planCounts[r] || !dKeys.includes(k)) return;
     if(allowed.size && !allowed.has(r)) return;
-    planCounts[r][k] = parsePlanValue(p.valor);
+    planCounts[r][k] = Number(p.valor) || 0;
   });
-
-  window._planCounts = planCounts;
-  window._planDays = dKeys;
-
-  // Días del rango
-  const dFrom = new Date(start), dTo = new Date(end);
-  const days = buildDays(dFrom, dTo);
-  const dKeys = days.map(dateKey);
-
-  // Responsables activos (incluye planificados sin avance)
-  const respSet = new Set([...groups.values()].map(g=>g.responsable).filter(Boolean));
-
-  // Traer planificado y volcar al mapa
-  const planRows = await fetchPlan(start, end);
-  (planRows||[]).forEach(p=>{
-    const resp = (p.responsable||"").toString().trim().toLowerCase();
-    if(!resp) return;
-    if(allowed.size && !allowed.has(resp)) return;
-    respSet.add(resp);
-  });
-
-  const resps = [...respSet].sort();
-
-  // Contadores: elaborado por día (por UNIR), plan desde plan_pred
-  const doneCounts = {}; const planCounts = {};
-  resps.forEach(r=>{
-    doneCounts[r] = Object.fromEntries(dKeys.map(k=>[k,0]));
-    planCounts[r] = Object.fromEntries(dKeys.map(k=>[k,{ tipo:"numero", valor:0 }]));
-  });
-
-  // Mapa de celdas para detalle
-  const cellMapDone = new Map(); // `${resp}|${day}` -> array de grupos {comunidad,codigo_mtc,unirId,cods[]}
-
-  // Llenar 'done' (uno por UNIR)
-  groups.forEach(g=>{
-    const r = g.responsable; const k = g.fecha;
-    if(!r || !k || !(k in (doneCounts[r]||{}))) return;
-    doneCounts[r][k] += 1;
-    const ck = `${r}|${k}`; if(!cellMapDone.has(ck)) cellMapDone.set(ck, []);
-    cellMapDone.get(ck).push({ comunidad: g.comunidad, codigo_mtc: g.codigo_mtc, unirId: g.unirId, cods: g.cods });
-  });
-
-  (planRows||[]).forEach(p=>{
-    const r = (p.responsable||"").toString().trim().toLowerCase();
-    const k = (p.fecha||"").toString().slice(0,10);
-    if(!r || !k || !planCounts[r] || !dKeys.includes(k)) return;
-    if(allowed.size && !allowed.has(r)) return;
-    planCounts[r][k] = parsePlanValue(p.valor);
-  });
-
 
   window._planCounts = planCounts;
   window._planDays = dKeys;
@@ -1356,7 +1056,6 @@ async function runReport(){
   document.getElementById("kpi_resps").textContent = resps.length;
 
   // Render tabla
-
   let tableHtml = "<tr>";
   tableHtml += `<th class="sticky l1">RESPONSABLE</th>`;
   dKeys.forEach(k=>{
@@ -1377,23 +1076,15 @@ async function runReport(){
     }
     let rowPlan = 0;
     dKeys.forEach(k=>{
-      const entry = planCounts[r][k] || { tipo:"numero", valor:0 };
+      const entry = Number(planCounts[r][k]) || 0;
       const dayIdx = new Date(k).getDay();
       const dayClass = dayIdx === 0 ? "sunday" : "";
-      if(entry.tipo === "texto"){
-        if(rpEditMode){
-          tableHtml += `<td class="${dayClass}"><input class="ovr-input" data-resp="${r}" data-date="${k}" data-type="texto" type="text" value="${esc(entry.valor)}"></td>`;
-        }else{
-          tableHtml += `<td class="${dayClass}"><span class="plan-text">${esc(entry.valor)}</span></td>`;
-        }
+      const numVal = entry;
+      rowPlan += numVal;
+      if(rpEditMode){
+        tableHtml += `<td class="${dayClass}"><input class="ovr-input" data-resp="${r}" data-date="${k}" type="number" min="0" value="${numVal}"></td>`;
       }else{
-        const numVal = Number(entry.valor) || 0;
-        rowPlan += numVal;
-        if(rpEditMode){
-          tableHtml += `<td class="${dayClass}"><input class="ovr-input" data-resp="${r}" data-date="${k}" data-type="numero" type="number" min="0" value="${numVal}"></td>`;
-        }else{
-          tableHtml += `<td class="${dayClass}">${numVal}</td>`;
-        }
+        tableHtml += `<td class="${dayClass}">${numVal}</td>`;
       }
     });
     tableHtml += `<td><b>${rowPlan}</b></td>`;
@@ -1434,230 +1125,29 @@ async function runReport(){
       const resp = e.target.getAttribute("data-resp");
       const fecha = e.target.getAttribute("data-date");
       if(!resp || !fecha) return;
-      const tipo = e.target.dataset.type === "texto" ? "texto" : (e.target.type === "text" ? "texto" : "numero");
-      try{
-        let valor;
-        if(tipo === "texto"){
-          valor = (e.target.value || "Vacaciones").trim() || "Vacaciones";
-        }else{
-          const raw = e.target.value === "" ? "0" : e.target.value;
-          const num = Number(raw);
-          if(!Number.isFinite(num) || num < 0){
-            alert("Ingresa un número válido (0 o mayor)");
-            const prev = window._planCounts?.[resp]?.[fecha];
-            e.target.value = Number(prev?.valor || 0);
-            return;
-          }
-          valor = num;
-        }
-        await savePlan(resp, fecha, valor, tipo);
-        rpStatus.textContent = "Planificado guardado ✓";
-        if(!window._planCounts) window._planCounts = {};
-        if(!window._planCounts[resp]) window._planCounts[resp] = {};
-        window._planCounts[resp][fecha] = { tipo, valor };
-      }catch(err){
-        console.error(err);
-        rpStatus.textContent = "Error al guardar planificado";
-      }
-    });
-  });
-
-
-  let html = "<tr>";
-  html += `<th class="sticky l1">RESPONSABLE</th>`;
-  dKeys.forEach(k=>{
-    const d = new Date(k);
-    const dayIdx = d.getDay();
-    const classes = dayIdx === 0 ? "day-head sunday" : "day-head";
-    html += `<th class="${classes}">${String(d.getDate()).padStart(2,'0')}<div class="muted">${["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][dayIdx]}</div></th>`;
-  });
-  html += `<th>Total</th></tr>`;
-
-  resps.forEach(r=>{
-    // Fila plan
-    html += `<tr>`;
-    if(rpEditMode){
-      html += `<td class="sticky l1"><div><b>${cap(r)}</b> — <span class="muted">Planificado</span></div></td>`;
-    }else{
-      html += `<td class="sticky l1"><div class="plan-header"><div><b>${cap(r)}</b> — <span class="muted">Planificado</span></div><button type="button" class="btn-small plan-bulk-btn" data-resp="${r}">Actualizar avance diario</button></div></td>`;
-    }
-    let rowPlan = 0;
-    dKeys.forEach(k=>{
-      const entry = planCounts[r][k] || { tipo:"numero", valor:0 };
-      const dayIdx = new Date(k).getDay();
-      const dayClass = dayIdx === 0 ? "sunday" : "";
-      if(entry.tipo === "texto"){
-        if(rpEditMode){
-          html += `<td class="${dayClass}"><input class="ovr-input" data-resp="${r}" data-date="${k}" data-type="texto" type="text" value="${esc(entry.valor)}"></td>`;
-        }else{
-          html += `<td class="${dayClass}"><span class="plan-text">${esc(entry.valor)}</span></td>`;
-        }
-      }else{
-        const numVal = Number(entry.valor) || 0;
-        rowPlan += numVal;
-        if(rpEditMode){
-          html += `<td class="${dayClass}"><input class="ovr-input" data-resp="${r}" data-date="${k}" data-type="numero" type="number" min="0" value="${numVal}"></td>`;
-        }else{
-          html += `<td class="${dayClass}">${numVal}</td>`;
-        }
-      }
-    });
-    html += `<td><b>${rowPlan}</b></td>`;
-    html += `</tr>`;
-
-    // Fila elaborado
-    html += `<tr>`;
-    html += `<td class="sticky l1"><b>${cap(r)}</b> — <span class="muted">Elaborado</span></td>`;
-    let rowDone = 0;
-    dKeys.forEach(k=>{
-      const n = doneCounts[r]?.[k] || 0; rowDone += n;
-      const dayIdx = new Date(k).getDay();
-      const dayClass = dayIdx === 0 ? "sunday" : "";
-      if(n>0){
-        html += `<td class="clickable ${dayClass}" onclick="openRpCell('${r}','${k}')"><b>${n}</b></td>`;
-      }else{
-        html += `<td class="${dayClass} muted">0</td>`;
-      }
-    });
-    html += `<td><b>${rowDone}</b></td>`;
-    html += `</tr>`;
-  });
-
-  rpTable.innerHTML = html;
-
-  if(!rpEditMode){
-    rpTable.querySelectorAll(".plan-bulk-btn").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        const resp = btn.getAttribute("data-resp");
-        if(resp) openPlanModal(resp);
-      });
-    });
-  }
-
-
-  let html = "<tr>";
-  html += `<th class="sticky l1">RESPONSABLE</th>`;
-  dKeys.forEach(k=>{
-    const d = new Date(k);
-    html += `<th>${String(d.getDate()).padStart(2,'0')}<div class="muted">${["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][d.getDay()]}</div></th>`;
-  });
-  html += `<th>Total</th></tr>`;
-
-  resps.forEach(r=>{
-    // Fila plan
-    html += `<tr>`;
-    html += `<td class="sticky l1"><b>${cap(r)}</b> — <span class="muted">Planificado</span></td>`;
-    let rowPlan = 0;
-    dKeys.forEach(k=>{
-      const val = planCounts[r][k] || 0; rowPlan += val;
-      if(rpEditMode){
-        html += `<td><input class="ovr-input" data-resp="${r}" data-date="${k}" type="number" min="0" value="${val}"></td>`;
-      }else{
-        html += `<td><span class="plan-cell"><span class="plan-value" data-resp="${r}" data-date="${k}">${val}</span><button type="button" class="plan-edit-btn" data-resp="${r}" data-date="${k}" data-val="${val}">✏️</button></span></td>`;
-      }
-    });
-    html += `<td><b>${rowPlan}</b></td>`;
-    html += `</tr>`;
-
-    // Fila elaborado
-    html += `<tr>`;
-    html += `<td class="sticky l1"><b>${cap(r)}</b> — <span class="muted">Elaborado</span></td>`;
-    let rowDone = 0;
-    dKeys.forEach(k=>{
-      const n = doneCounts[r][k] || 0; rowDone += n;
-      if(n>0){
-        html += `<td class="clickable" onclick="openRpCell('${r}','${k}')"><b>${n}</b></td>`;
-      }else{
-        html += `<td class="muted">0</td>`;
-      }
-    });
-    html += `<td><b>${rowDone}</b></td>`;
-    html += `</tr>`;
-  });
-
-  rpTable.innerHTML = html;
-
-
-  // Guardado inline de planificado
-  rpTable.querySelectorAll(".ovr-input").forEach(inp=>{
-    inp.addEventListener("change", async (e)=>{
-      const resp = e.target.getAttribute("data-resp");
-      const fecha = e.target.getAttribute("data-date");
-
-      if(!resp || !fecha) return;
-      const tipo = e.target.dataset.type === "texto" ? "texto" : (e.target.type === "text" ? "texto" : "numero");
-      try{
-        let valor;
-        if(tipo === "texto"){
-          valor = (e.target.value || "Vacaciones").trim() || "Vacaciones";
-        }else{
-          const raw = e.target.value === "" ? "0" : e.target.value;
-          const num = Number(raw);
-          if(!Number.isFinite(num) || num < 0){
-            alert("Ingresa un número válido (0 o mayor)");
-            const prev = window._planCounts?.[resp]?.[fecha];
-            e.target.value = Number(prev?.valor || 0);
-            return;
-          }
-          valor = num;
-        }
-        await savePlan(resp, fecha, valor, tipo);
-        rpStatus.textContent = "Planificado guardado ✓";
-        if(!window._planCounts) window._planCounts = {};
-        if(!window._planCounts[resp]) window._planCounts[resp] = {};
-        window._planCounts[resp][fecha] = { tipo, valor };
-
-      const valor = Number(e.target.value)||0;
-      try{
-        await savePlan(resp, fecha, valor);
-        rpStatus.textContent = "Planificado guardado ✓";
-
-      }catch(err){
-        console.error(err);
-        rpStatus.textContent = "Error al guardar planificado";
-      }
-    });
-  });
-
-
-
-  rpTable.querySelectorAll(".plan-edit-btn").forEach(btn=>{
-    btn.addEventListener("click", async ()=>{
-      const resp = btn.getAttribute("data-resp");
-      const fecha = btn.getAttribute("data-date");
-      const current = Number(btn.getAttribute("data-val")||0);
-      const promptLabel = `Nuevo planificado para ${cap(resp)} — ${fecha}`;
-      const input = prompt(promptLabel, current);
-      if(input === null) return;
-      const parsed = Number(input);
-      if(!Number.isFinite(parsed) || parsed < 0){
+      const raw = e.target.value === "" ? "0" : e.target.value;
+      const num = Number(raw);
+      if(!Number.isFinite(num) || num < 0){
         alert("Ingresa un número válido (0 o mayor)");
+        const prev = window._planCounts?.[resp]?.[fecha] ?? 0;
+        e.target.value = Number(prev) || 0;
         return;
       }
-      btn.disabled = true;
       try{
-        await savePlan(resp, fecha, parsed);
+        await savePlan(resp, fecha, num);
         rpStatus.textContent = "Planificado guardado ✓";
-        btn.setAttribute("data-val", parsed);
-        const container = btn.closest(".plan-cell");
-        const valueSpan = container?.querySelector(".plan-value");
-        if(valueSpan) valueSpan.textContent = parsed;
+        if(!window._planCounts) window._planCounts = {};
+        if(!window._planCounts[resp]) window._planCounts[resp] = {};
+        window._planCounts[resp][fecha] = num;
       }catch(err){
         console.error(err);
-        alert("❌ Error al guardar planificado");
-      }finally{
-        btn.disabled = false;
+        rpStatus.textContent = "Error al guardar planificado";
       }
     });
   });
 
-
   // Gráfico de totales diarios (elaborado por UNIR)
-
   const totals = dKeys.map(k => resps.reduce((acc,r)=> acc + (doneCounts[r]?.[k]||0), 0));
-
-  const totals = dKeys.map(k => resps.reduce((acc,r)=> acc + (doneCounts[r]?.[k]||0), 0));
-
   renderReportChart(dKeys, totals);
 
   // Exponer mapa para detalle
@@ -1717,18 +1207,6 @@ function renderReportChart(dKeys, totals){
     },
     options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } }
   });
-
-}
-
-function esc(s){ return (s??"").toString().replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
-function cap(r){ return (r||"").replace(/\b\w/g,m=>m.toUpperCase()); }
-function parsePlanValue(raw){
-  if(raw === null || raw === undefined) return { tipo:"numero", valor:0 };
-  const str = raw.toString();
-  if(str.trim() === "") return { tipo:"numero", valor:0 };
-  const num = Number(str);
-  if(Number.isFinite(num)) return { tipo:"numero", valor:num };
-  return { tipo:"texto", valor:str };
 }
 
 async function initReportSection(){
@@ -1736,22 +1214,8 @@ async function initReportSection(){
   setupReportElements();
 }
 
-/** ====== RESIZER ====== **/
-(function initGutter(){
-
-}
-
 function esc(s){ return (s??"").toString().replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
 function cap(r){ return (r||"").replace(/\b\w/g,m=>m.toUpperCase()); }
-function parsePlanValue(raw){
-  if(raw === null || raw === undefined) return { tipo:"numero", valor:0 };
-  const str = raw.toString();
-  if(str.trim() === "") return { tipo:"numero", valor:0 };
-  const num = Number(str);
-  if(Number.isFinite(num)) return { tipo:"numero", valor:num };
-  return { tipo:"texto", valor:str };
-}
-
 /** ====== RESIZER ====== **/
 (function initGutter(){
 
