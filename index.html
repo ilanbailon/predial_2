@@ -704,6 +704,7 @@ function openAreaModal(cod){
   modalAreaBack.style.display = "flex";
   client.from("cod_pred").select("*").eq("cod_prel",cod).single().then(({data})=>{
 
+
 const modalAreaBack = document.getElementById("modalAreaBack");
 const planModalBack = document.getElementById("planModalBack");
 const planModalTitle = document.getElementById("planModalTitle");
@@ -713,6 +714,7 @@ let planModalResp = null;
 function openAreaModal(cod){
   modalAreaBack.style.display = "flex";
   client.from("cod_pred").select("*").eq("cod_prel",cod).single().then(({data})=>{
+
 
     if(!data) return;
     setVal("a_cod_prel", data.cod_prel ?? "");
@@ -766,7 +768,11 @@ function openPlanModal(resp){
   planModalList.innerHTML = "";
 
   days.forEach(day=>{
+
+    const entry = Number(data[day]) || 0;
+
     const entry = data[day] || { tipo:"numero", valor:0 };
+
     const row = document.createElement("div");
     row.className = "plan-modal-row" + (new Date(day).getDay() === 0 ? " sunday" : "");
     row.dataset.date = day;
@@ -778,6 +784,19 @@ function openPlanModal(resp){
     label.innerHTML = `<span>${day}</span><small>${weekday}</small>`;
 
     const typeWrap = document.createElement("div");
+
+    typeWrap.className = "muted";
+    typeWrap.textContent = "Número";
+
+    const inputWrap = document.createElement("div");
+    const input = document.createElement("input");
+    input.type = "number";
+    input.min = "0";
+    input.value = entry;
+    input.className = "plan-value-field";
+    inputWrap.appendChild(input);
+
+
     const select = document.createElement("select");
     select.innerHTML = `<option value="numero">Número</option><option value="texto">Texto</option>`;
     select.value = entry.tipo === "texto" ? "texto" : "numero";
@@ -830,6 +849,17 @@ planModalSave?.addEventListener("click", async ()=>{
   const updates = [];
   for(const row of rows){
     const date = row.dataset.date;
+
+    const input = row.querySelector(".plan-value-field");
+    if(!date || !input) continue;
+    const raw = input.value === "" ? "0" : input.value;
+    const num = Number(raw);
+    if(!Number.isFinite(num) || num < 0){
+      alert(`Valor inválido para ${date}. Debe ser un número mayor o igual a 0.`);
+      return;
+    }
+    updates.push({ fecha: date, valor: num });
+
     const select = row.querySelector("select");
     const input = row.querySelector(".plan-value-field");
     if(!date || !select || !input) continue;
@@ -846,16 +876,22 @@ planModalSave?.addEventListener("click", async ()=>{
       const text = (input.value || "Vacaciones").trim();
       updates.push({ fecha: date, tipo:"texto", valor: text || "Vacaciones" });
     }
+
   }
 
   const currentData = window._planCounts?.[planModalResp] || {};
   const pending = updates.filter(item=>{
+
+    const existing = Number(currentData[item.fecha]) || 0;
+    return Number(existing) !== Number(item.valor);
+
     const existing = currentData[item.fecha] || { tipo:"numero", valor:0 };
     if(existing.tipo === item.tipo){
       if(item.tipo === "numero") return Number(existing.valor) !== Number(item.valor);
       return (existing.valor || "").toString() !== (item.valor || "").toString();
     }
     return true;
+
   });
 
   if(!pending.length){
@@ -868,7 +904,11 @@ planModalSave?.addEventListener("click", async ()=>{
   planModalSave.textContent = "Guardando…";
   try{
     for(const item of pending){
+
+      await savePlan(planModalResp, item.fecha, item.valor);
+
       await savePlan(planModalResp, item.fecha, item.valor, item.tipo);
+
     }
     closePlanModal();
     rpStatus.textContent = "Planificado guardado ✓";
@@ -945,6 +985,162 @@ function setupReportElements(){
     await selectFromReport(unir, cod);
   });
 }
+
+function openReport(){
+  if(!reportDrawerEl) return;
+  defaultReportDates();
+  hydrateRespChips().then(()=> runReport());
+  reportDrawerEl.classList.add("open");
+  reportDrawerEl.setAttribute("aria-hidden","false");
+}
+function closeReport(){
+  if(!reportDrawerEl) return;
+  reportDrawerEl.classList.remove("open");
+  reportDrawerEl.setAttribute("aria-hidden","true");
+}
+
+function dateKey(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; }
+function buildDays(from, to){ const a=[]; const cur=new Date(from); while(cur<=to){ a.push(new Date(cur)); cur.setDate(cur.getDate()+1);} return a; }
+function defaultReportDates(){
+  if(!rpStart || !rpEnd) return;
+  const today = new Date();
+  let year = today.getFullYear();
+  const startOct = new Date(year, 9, 2);
+  if(today < startOct){
+    year = year - 1;
+  }
+  const start = new Date(year, 9, 2);
+  const end = new Date(year, 9, 31);
+  rpStart.value = dateKey(start);
+  rpEnd.value = dateKey(end);
+}
+async function hydrateRespChips(){
+  if(!rpChips) return;
+  const { data, error } = await client.from("cod_pred").select("responsable").not("responsable","is",null);
+  if(error) return;
+
+  const set = new Set((data||[]).map(r => (r.responsable||"").toString().trim().toLowerCase()).filter(Boolean));
+  rpChips.innerHTML = "";
+  if(set.size===0){ rpChips.innerHTML = `<span class="muted">No hay responsables registrados.</span>`; return; }
+  [...set].sort().forEach(name=>{
+    const id = "rp_chk_"+name.replace(/\s+/g,'_');
+    const cap = name.replace(/\b\w/g, m=>m.toUpperCase());
+    const lbl = document.createElement("label");
+    lbl.className = "chip active";
+    lbl.innerHTML = `<input id="${id}" type="checkbox" class="rp-resp" value="${name}" checked> ${cap}`;
+    lbl.querySelector("input").addEventListener("change",(e)=> lbl.classList.toggle("active", e.target.checked));
+    rpChips.appendChild(lbl);
+  });
+}
+function selectedResp(){
+  const set = new Set();
+  document.querySelectorAll(".rp-resp:checked").forEach(cb=> set.add(cb.value));
+  return set;
+}
+
+// Tabla 'plan_pred' (responsable, fecha, valor)
+async function fetchPlan(start, end){
+  const { data, error } = await client.from("plan_pred")
+    .select("responsable,fecha,valor")
+    .gte("fecha", start).lte("fecha", end);
+  if(error){ console.warn("plan_pred:", error.message); return []; }
+  return data||[];
+}
+
+async function savePlan(resp, fecha, valor){
+  const payload = {
+    responsable: resp,
+    fecha,
+    valor: Number(valor) || 0
+  };
+  const { error } = await client.from("plan_pred")
+    .upsert(payload, { onConflict: "responsable,fecha" });
+  if(error) throw error;
+}
+
+async function runReport(){
+  if(!rpStart || !rpEnd || !rpStatus || !rpDetail || !rpTable) return;
+  const start = rpStart.value, end = rpEnd.value;
+  if(!start || !end){ alert("Selecciona fechas"); return; }
+  const allowed = selectedResp(); // vacío => todos
+
+  rpStatus.textContent = "Cargando…";
+  rpDetail.style.display = "none"; rpDetail.innerHTML = "";
+
+  // Trae filas del rango (usamos responsables/fecha_elab comunes)
+  let { data, error } = await client
+    .from("cod_pred")
+    .select("unir,cod_prel,codigo_mtc,comunidad,responsable,fecha_elab")
+    .not("fecha_elab","is",null)
+    .gte("fecha_elab", start)
+    .lte("fecha_elab", end);
+  if(error){ rpStatus.textContent = "Error: "+error.message; return; }
+
+  // Deduplicar por UNIR y armar lista de códigos por grupo
+  const groups = new Map(); // unir -> {responsable, fecha, comunidad, codigo_mtc, unirId, cods:[]}
+  (data||[]).forEach(r=>{
+    const resp = (r.responsable||"").toString().trim().toLowerCase();
+    if(allowed.size && !allowed.has(resp)) return;
+    const key = r.unir;
+    if(key == null) return;
+    if(!groups.has(key)){
+      groups.set(key, {
+        responsable: resp,
+        fecha: (r.fecha_elab||"").toString().slice(0,10),
+        comunidad: r.comunidad||"",
+        codigo_mtc: r.codigo_mtc||"",
+        unirId: key,
+        cods: []
+      });
+    }
+    groups.get(key).cods.push(r.cod_prel||"");
+  });
+
+  // Días del rango
+  const dFrom = new Date(start), dTo = new Date(end);
+  const days = buildDays(dFrom, dTo);
+  const dKeys = days.map(dateKey);
+
+  // Responsables activos (incluye planificados sin avance)
+  const respSet = new Set([...groups.values()].map(g=>g.responsable).filter(Boolean));
+
+  // Traer planificado y volcar al mapa
+  const planRows = await fetchPlan(start, end);
+  (planRows||[]).forEach(p=>{
+    const resp = (p.responsable||"").toString().trim().toLowerCase();
+    if(!resp) return;
+    if(allowed.size && !allowed.has(resp)) return;
+    respSet.add(resp);
+  });
+
+  const resps = [...respSet].sort();
+
+  // Contadores: elaborado por día (por UNIR), plan desde plan_pred
+  const doneCounts = {}; const planCounts = {};
+  resps.forEach(r=>{
+    doneCounts[r] = Object.fromEntries(dKeys.map(k=>[k,0]));
+    planCounts[r] = Object.fromEntries(dKeys.map(k=>[k,0]));
+  });
+
+  // Mapa de celdas para detalle
+  const cellMapDone = new Map(); // `${resp}|${day}` -> array de grupos {comunidad,codigo_mtc,unirId,cods[]}
+
+  // Llenar 'done' (uno por UNIR)
+  groups.forEach(g=>{
+    const r = g.responsable; const k = g.fecha;
+    if(!r || !k || !(k in (doneCounts[r]||{}))) return;
+    doneCounts[r][k] += 1;
+    const ck = `${r}|${k}`; if(!cellMapDone.has(ck)) cellMapDone.set(ck, []);
+    cellMapDone.get(ck).push({ comunidad: g.comunidad, codigo_mtc: g.codigo_mtc, unirId: g.unirId, cods: g.cods });
+  });
+
+  (planRows||[]).forEach(p=>{
+    const r = (p.responsable||"").toString().trim().toLowerCase();
+    const k = (p.fecha||"").toString().slice(0,10);
+    if(!r || !k || !planCounts[r] || !dKeys.includes(k)) return;
+    if(allowed.size && !allowed.has(r)) return;
+    planCounts[r][k] = Number(p.valor) || 0;
+  });
 
 
 <!DOCTYPE html>
@@ -2666,6 +2862,7 @@ async function runReport(){
   });
 
 
+
   window._planCounts = planCounts;
   window._planDays = dKeys;
 
@@ -2696,6 +2893,17 @@ async function runReport(){
     }
     let rowPlan = 0;
     dKeys.forEach(k=>{
+
+      const entry = Number(planCounts[r][k]) || 0;
+      const dayIdx = new Date(k).getDay();
+      const dayClass = dayIdx === 0 ? "sunday" : "";
+      const numVal = entry;
+      rowPlan += numVal;
+      if(rpEditMode){
+        tableHtml += `<td class="${dayClass}"><input class="ovr-input" data-resp="${r}" data-date="${k}" type="number" min="0" value="${numVal}"></td>`;
+      }else{
+        tableHtml += `<td class="${dayClass}">${numVal}</td>`;
+
       const entry = planCounts[r][k] || { tipo:"numero", valor:0 };
       const dayIdx = new Date(k).getDay();
       const dayClass = dayIdx === 0 ? "sunday" : "";
@@ -2713,6 +2921,7 @@ async function runReport(){
         }else{
           tableHtml += `<td class="${dayClass}">${numVal}</td>`;
         }
+
       }
     });
     tableHtml += `<td><b>${rowPlan}</b></td>`;
@@ -2753,6 +2962,22 @@ async function runReport(){
       const resp = e.target.getAttribute("data-resp");
       const fecha = e.target.getAttribute("data-date");
       if(!resp || !fecha) return;
+
+      const raw = e.target.value === "" ? "0" : e.target.value;
+      const num = Number(raw);
+      if(!Number.isFinite(num) || num < 0){
+        alert("Ingresa un número válido (0 o mayor)");
+        const prev = window._planCounts?.[resp]?.[fecha] ?? 0;
+        e.target.value = Number(prev) || 0;
+        return;
+      }
+      try{
+        await savePlan(resp, fecha, num);
+        rpStatus.textContent = "Planificado guardado ✓";
+        if(!window._planCounts) window._planCounts = {};
+        if(!window._planCounts[resp]) window._planCounts[resp] = {};
+        window._planCounts[resp][fecha] = num;
+
       const tipo = e.target.dataset.type === "texto" ? "texto" : (e.target.type === "text" ? "texto" : "numero");
       try{
         let valor;
@@ -2939,6 +3164,10 @@ async function runReport(){
   });
 
 
+  // Gráfico de totales diarios (elaborado por UNIR)
+  const totals = dKeys.map(k => resps.reduce((acc,r)=> acc + (doneCounts[r]?.[k]||0), 0));
+
+
 
   rpTable.querySelectorAll(".plan-edit-btn").forEach(btn=>{
     btn.addEventListener("click", async ()=>{
@@ -2976,6 +3205,7 @@ async function runReport(){
   const totals = dKeys.map(k => resps.reduce((acc,r)=> acc + (doneCounts[r]?.[k]||0), 0));
 
   const totals = dKeys.map(k => resps.reduce((acc,r)=> acc + (doneCounts[r]?.[k]||0), 0));
+
 
   renderReportChart(dKeys, totals);
 
@@ -3037,6 +3267,7 @@ function renderReportChart(dKeys, totals){
     options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } }
   });
 
+
 }
 
 function esc(s){ return (s??"").toString().replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
@@ -3048,12 +3279,17 @@ function parsePlanValue(raw){
   const num = Number(str);
   if(Number.isFinite(num)) return { tipo:"numero", valor:num };
   return { tipo:"texto", valor:str };
+
 }
 
 async function initReportSection(){
   await injectReportDrawer();
   setupReportElements();
 }
+
+
+function esc(s){ return (s??"").toString().replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+function cap(r){ return (r||"").replace(/\b\w/g,m=>m.toUpperCase()); }
 
 /** ====== RESIZER ====== **/
 (function initGutter(){
@@ -3070,6 +3306,7 @@ function parsePlanValue(raw){
   if(Number.isFinite(num)) return { tipo:"numero", valor:num };
   return { tipo:"texto", valor:str };
 }
+
 
 /** ====== RESIZER ====== **/
 (function initGutter(){
@@ -3101,4 +3338,3 @@ function parsePlanValue(raw){
 </script>
 </body>
 </html>
-
