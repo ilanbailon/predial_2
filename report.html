@@ -1,0 +1,31 @@
+<aside id="reportDrawer" class="drawer" aria-hidden="true">
+  <div class="drawer-head">
+    <h3 style="margin:0">Reporte — Planificado vs Elaborado (por grupo UNIR)</h3>
+    <button class="btn-small" id="rp_close">✕</button>
+  </div>
+
+  <div class="row">
+    <label>Desde: <input id="rp_start" type="date"></label>
+    <label>Hasta: <input id="rp_end" type="date"></label>
+    <button class="btn" id="rp_run">Generar</button>
+    <button class="ghost" id="rp_toggleEdit">Editar Planificado</button>
+    <span id="rp_status" class="muted"></span>
+  </div>
+
+  <div id="rp_chips" class="row" style="margin-top:-8px"></div>
+
+  <div class="kpi-line">
+    <div class="kpi"><div class="label">Total Elaborado (rango, por UNIR)</div><div id="kpi_total" class="val">—</div></div>
+    <div class="kpi"><div class="label">Responsables activos</div><div id="kpi_resps" class="val">—</div></div>
+  </div>
+
+  <div style="overflow:auto;border:1px solid #eee;border-radius:10px;margin:0 16px 12px">
+    <table id="rp_table" class="report"></table>
+  </div>
+
+  <div id="chartWrap" style="display:none">
+    <canvas id="rp_chart" height="280"></canvas>
+  </div>
+
+  <div id="rp_detail" style="display:none"></div>
+</aside>
