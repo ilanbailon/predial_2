@@ -78,6 +78,16 @@
     .modal-back{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.45);z-index:7000}
     .modal{background:#fff;border-radius:12px;padding:16px;width:min(520px,90vw);max-height:85vh;overflow:auto;box-shadow:0 24px 48px rgba(15,23,42,.28)}
 
+    
+    .plan-text{display:inline-block;padding:2px 8px;border-radius:999px;background:#fef3c7;color:#92400e;font-weight:600;font-size:12px}
+    .plan-header{display:flex;flex-direction:column;gap:6px}
+    .plan-header button{align-self:flex-start}
+    .day-head.sunday,.report td.sunday{background:#fee2e2!important;color:#b91c1c}
+    .report td.sunday .plan-text{background:#fecaca;color:#7f1d1d}
+
+    .modal-back{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.45);z-index:7000}
+    .modal{background:#fff;border-radius:12px;padding:16px;width:min(520px,90vw);max-height:85vh;overflow:auto;box-shadow:0 24px 48px rgba(15,23,42,.28)}
+
 
     
     .plan-text{display:inline-block;padding:2px 8px;border-radius:999px;background:#fef3c7;color:#92400e;font-weight:600;font-size:12px}
@@ -125,6 +135,15 @@
     .plan-modal-row input[type="text"]{width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:8px}
     .plan-modal-row select{width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:8px}
 
+    .plan-modal-grid{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+    .plan-modal-row{display:grid;grid-template-columns:160px 140px 1fr;gap:8px;align-items:center;padding:6px 8px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc}
+    .plan-modal-row.sunday{background:#fee2e2;border-color:#fecaca}
+    .plan-modal-row .plan-date{font-weight:600}
+    .plan-modal-row .plan-date small{display:block;font-size:12px;color:#64748b;font-weight:400}
+    .plan-modal-row input[type="number"]{width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:8px}
+    .plan-modal-row input[type="text"]{width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:8px}
+    .plan-modal-row select{width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:8px}
+
     .code-link{
       display:inline-block; padding:4px 8px; margin:2px 4px; border:1px solid #cbd5e1; border-radius:999px; background:#fff; cursor:pointer; font-size:12px;
     }
@@ -153,7 +172,7 @@
     <div id="rightControls">
       <button class="ghost" id="btnReport">📊 Reporte</button>
       <select id="filterComunidad"><option value="">Comunidad (todas)</option></select>
-      <select id="filterCondicion"><option value="">Condición (todas)</option></select>
+      <select id="filterGrupo"><option value="">Grupo (todos)</option></select>
       <button class="btn" id="btnFiltrar">Filtrar</button>
       <button class="ghost" id="btnReset">Reset</button>
     </div>
@@ -208,8 +227,8 @@
                   <option value="comunidad">comunidad</option>
                 </select>
               </div>
-              <div><div class="label">Responsable</div><input id="ed_responsable" type="text"></div>
-              <div><div class="label">Grupo</div><input id="ed_grupo" type="text"></div>
+              <div><div class="label">Responsable</div><select id="ed_responsable"></select></div>
+              <div><div class="label">Grupo</div><select id="ed_grupo"></select></div>
               <div><div class="label">Fecha elaboración</div><input id="ed_fecha" type="date"></div>
             </div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
@@ -251,6 +270,29 @@
         <button class="btn-small" onclick="closeAreaModal()">Cancelar</button>
         <button class="btn" onclick="saveArea()">Guardar</button>
       </div>
+
+    </div>
+  </div>
+
+  <!-- Modal Planificado -->
+  <div id="planModalBack" class="modal-back" style="display:none">
+    <div class="modal">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h3 id="planModalTitle">Actualizar avance diario</h3>
+        <button class="btn-small" type="button" onclick="closePlanModal()">✕</button>
+      </div>
+      <p class="muted" style="margin-top:0">Define valores diarios planificados. Puedes alternar entre número o texto (por ejemplo, "Vacaciones").</p>
+      <div id="planModalList" class="plan-modal-grid"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+        <button class="btn-small" type="button" onclick="closePlanModal()">Cancelar</button>
+        <button class="btn" type="button" id="planModalSave">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenedor para reporte embebido -->
+  <div id="reportHost" data-src="report.html"></div>
+
     </div>
   </div>
 
@@ -302,6 +344,7 @@
 
     <div id="rp_detail" style="display:none"></div>
   </aside>
+
 
 <script>
 /** ====== CONFIG ====== **/
@@ -466,7 +509,21 @@ async function showGroup(unirId){
   setCommonMode(false);
 }
 function setText(id, val){ document.getElementById(id).textContent = val ?? ""; }
-function setVal(id, val){ document.getElementById(id).value = val ?? ""; }
+function setVal(id, val){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const value = val ?? "";
+  if(el.tagName === "SELECT" && value){
+    const hasOption = Array.from(el.options).some(opt => opt.value === value);
+    if(!hasOption){
+      const opt = document.createElement("option");
+      opt.value = value;
+      opt.textContent = value;
+      el.appendChild(opt);
+    }
+  }
+  el.value = value;
+}
 function normTipo(v){ const s=(v||"").toLowerCase(); if(s==="comunidad") return "comunidad"; return "predios"; }
 function setCommonMode(edit){
   commonView.style.display = edit ? "none" : "";
@@ -506,6 +563,7 @@ btnSaveCommon.addEventListener("click", async ()=>{
   if(error){ alert("❌ Error al guardar comunes: "+error.message); return; }
   alert("✅ Datos comunes actualizados");
   await loadAllPredios();
+  await hydrateLookups();
   await showGroup(currentUnirId);
 });
 function valOrNull(id){ const v = document.getElementById(id).value; return v==="" ? null : v; }
@@ -552,25 +610,66 @@ async function runSuggest(q){
 
 /** ====== FILTERS ====== **/
 const selCom = document.getElementById("filterComunidad");
-const selCon = document.getElementById("filterCondicion");
+const selGrupo = document.getElementById("filterGrupo");
+const selRespEdit = document.getElementById("ed_responsable");
+const selGrupoEdit = document.getElementById("ed_grupo");
+const PRESET_GRUPOS = ["1","2","3","4","1er_entregable"];
+
 document.getElementById("btnFiltrar").addEventListener("click", applyFilters);
 document.getElementById("btnReset").addEventListener("click", async ()=>{
-  selCom.value=""; selCon.value=""; searchBox.value="";
+  selCom.value=""; selGrupo.value=""; searchBox.value="";
   await loadAllPredios();
   blockCommon.style.display="none"; wrapAreas.style.display="none"; emptyHint.style.display="";
 });
-async function hydrateFilterOptions(){
-  const { data, error } = await client.from("cod_pred").select("comunidad,condicion").not("geom","is",null);
-  if(error) return;
-  const comunidades = [...new Set(data.map(d=>d.comunidad).filter(Boolean))].sort();
-  const condiciones = [...new Set(data.map(d=>d.condicion).filter(Boolean))].sort();
-  comunidades.forEach(v=>{ const o=document.createElement("option"); o.value=v; o.textContent=v; selCom.appendChild(o); });
-  condiciones.forEach(v=>{ const o=document.createElement("option"); o.value=v; o.textContent=v; selCon.appendChild(o); });
+
+function fillSelect(el, values, { placeholder, format } = {}){
+  if(!el) return;
+  const prev = el.value;
+  el.innerHTML = "";
+  if(placeholder !== undefined){
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = placeholder;
+    el.appendChild(opt);
+  }
+  values.forEach(v=>{
+    const value = v ?? "";
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = format ? format(value) : value;
+    el.appendChild(opt);
+  });
+  if(prev && values.includes(prev)){
+    el.value = prev;
+  }
 }
+
+async function hydrateLookups(){
+  const { data, error } = await client.from("cod_pred").select("comunidad,responsable,grupo").not("geom","is",null);
+  if(error){ console.error(error); return; }
+  const comunidades = new Set();
+  const responsables = new Set();
+  const grupos = new Set(PRESET_GRUPOS);
+  (data||[]).forEach(row=>{
+    if(row.comunidad) comunidades.add(row.comunidad);
+    if(row.responsable) responsables.add(row.responsable);
+    if(row.grupo) grupos.add(String(row.grupo));
+  });
+
+  const sortAlpha = arr => [...arr].map(v=>v ?? "").filter(Boolean).sort((a,b)=>a.localeCompare(b,'es',{ sensitivity:'base' }));
+  const extraGroups = sortAlpha([...grupos].filter(g => !PRESET_GRUPOS.includes(g)));
+  const groupValues = [...PRESET_GRUPOS, ...extraGroups];
+
+  fillSelect(selCom, sortAlpha(comunidades), { placeholder: "Comunidad (todas)" });
+  fillSelect(selGrupo, groupValues, { placeholder: "Grupo (todos)", format: v=>v });
+  fillSelect(selRespEdit, sortAlpha(responsables), { placeholder: "Selecciona responsable", format: v=>cap(v) });
+  fillSelect(selGrupoEdit, groupValues, { placeholder: "Selecciona grupo", format: v=>v });
+}
+
 async function applyFilters(){
   let q = client.from("cod_pred").select("cod_prel,unir,tipo,geom,comunidad,condicion");
   if(selCom.value) q = q.eq("comunidad", selCom.value);
-  if(selCon.value) q = q.eq("condicion", selCon.value);
+  if(selGrupo.value) q = q.eq("grupo", selGrupo.value);
 
   const { data, error } = await q;
   if(error){ console.error(error); return; }
@@ -593,6 +692,7 @@ async function applyFilters(){
 }
 
 /** ====== MODAL ÁREA (misma lógica) ====== **/
+
 const modalAreaBack = document.getElementById("modalAreaBack");
 const planModalBack = document.getElementById("planModalBack");
 const planModalTitle = document.getElementById("planModalTitle");
@@ -602,6 +702,17 @@ let planModalResp = null;
 function openAreaModal(cod){
   modalAreaBack.style.display = "flex";
   client.from("cod_pred").select("*").eq("cod_prel",cod).single().then(({data})=>{
+
+const modalAreaBack = document.getElementById("modalAreaBack");
+const planModalBack = document.getElementById("planModalBack");
+const planModalTitle = document.getElementById("planModalTitle");
+const planModalList = document.getElementById("planModalList");
+const planModalSave = document.getElementById("planModalSave");
+let planModalResp = null;
+function openAreaModal(cod){
+  modalAreaBack.style.display = "flex";
+  client.from("cod_pred").select("*").eq("cod_prel",cod).single().then(({data})=>{
+
     if(!data) return;
     setVal("a_cod_prel", data.cod_prel ?? "");
     setVal("a_area", data.area ?? "");
@@ -612,6 +723,7 @@ function openAreaModal(cod){
     document.getElementById("a_obra").value = data.obra_complementaria ?? "";
     document.getElementById("a_plantaciones").value = data.plantaciones ?? "";
   });
+
 }
 function closeAreaModal(){ modalAreaBack.style.display = "none"; }
 function closePlanModal(){ planModalBack.style.display = "none"; planModalResp = null; planModalList.innerHTML = ""; planModalSave.disabled = false; planModalSave.textContent = "Guardar cambios"; }
@@ -619,6 +731,15 @@ async function saveArea(){
   const cod = document.getElementById("a_cod_prel").value;
   const update = {
     area: valOrNull("a_area"),
+
+}
+function closeAreaModal(){ modalAreaBack.style.display = "none"; }
+function closePlanModal(){ planModalBack.style.display = "none"; planModalResp = null; planModalList.innerHTML = ""; planModalSave.disabled = false; planModalSave.textContent = "Guardar cambios"; }
+async function saveArea(){
+  const cod = document.getElementById("a_cod_prel").value;
+  const update = {
+    area: valOrNull("a_area"),
+
     perimetro_suma: valOrNull("a_perimetro"),
     prog_ini: valOrNull("a_prog_ini"),
     prog_fin: valOrNull("a_prog_fin"),
@@ -631,6 +752,232 @@ async function saveArea(){
   alert("✅ Área actualizada");
   closeAreaModal();
   await loadAllPredios();
+
+  if(currentUnirId) highlightGroup(currentUnirId, false);
+}
+
+function openPlanModal(resp){
+  const pretty = cap(resp);
+  const days = window._planDays || [];
+  const data = window._planCounts?.[resp] || {};
+  planModalResp = resp;
+  planModalTitle.textContent = `Actualizar avance diario — ${pretty}`;
+  planModalList.innerHTML = "";
+
+  days.forEach(day=>{
+    const entry = data[day] || { tipo:"numero", valor:0 };
+    const row = document.createElement("div");
+    row.className = "plan-modal-row" + (new Date(day).getDay() === 0 ? " sunday" : "");
+    row.dataset.date = day;
+
+    const label = document.createElement("div");
+    label.className = "plan-date";
+    const dateObj = new Date(day);
+    const weekday = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"][dateObj.getDay()];
+    label.innerHTML = `<span>${day}</span><small>${weekday}</small>`;
+
+    const typeWrap = document.createElement("div");
+    const select = document.createElement("select");
+    select.innerHTML = `<option value="numero">Número</option><option value="texto">Texto</option>`;
+    select.value = entry.tipo === "texto" ? "texto" : "numero";
+    typeWrap.appendChild(select);
+
+    const inputWrap = document.createElement("div");
+    const input = document.createElement("input");
+    const applyType = (type, value)=>{
+      if(type === "numero"){
+        input.type = "number";
+        input.min = "0";
+        input.value = Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : 0;
+      }else{
+        input.type = "text";
+        input.removeAttribute("min");
+        input.value = value ? value.toString() : "Vacaciones";
+      }
+    };
+    if(select.value === "texto"){
+      applyType("texto", entry.tipo === "texto" ? entry.valor : "Vacaciones");
+    }else{
+      applyType("numero", entry.tipo === "numero" ? entry.valor : 0);
+    }
+    input.className = "plan-value-field";
+    inputWrap.appendChild(input);
+
+    select.addEventListener("change",()=>{
+      const current = input.value;
+      if(select.value === "texto"){
+        applyType("texto", current || "Vacaciones");
+      }else{
+        applyType("numero", current);
+      }
+    });
+
+    row.appendChild(label);
+    row.appendChild(typeWrap);
+    row.appendChild(inputWrap);
+    planModalList.appendChild(row);
+  });
+
+  planModalBack.style.display = "flex";
+}
+
+planModalSave?.addEventListener("click", async ()=>{
+  if(!planModalResp) return;
+  const rows = Array.from(planModalList.querySelectorAll(".plan-modal-row"));
+  if(!rows.length){ closePlanModal(); return; }
+
+  const updates = [];
+  for(const row of rows){
+    const date = row.dataset.date;
+    const select = row.querySelector("select");
+    const input = row.querySelector(".plan-value-field");
+    if(!date || !select || !input) continue;
+    const mode = select.value === "texto" ? "texto" : "numero";
+    if(mode === "numero"){
+      const raw = input.value === "" ? "0" : input.value;
+      const num = Number(raw);
+      if(!Number.isFinite(num) || num < 0){
+        alert(`Valor inválido para ${date}. Debe ser un número mayor o igual a 0.`);
+        return;
+      }
+      updates.push({ fecha: date, tipo:"numero", valor: num });
+    }else{
+      const text = (input.value || "Vacaciones").trim();
+      updates.push({ fecha: date, tipo:"texto", valor: text || "Vacaciones" });
+    }
+  }
+
+  const currentData = window._planCounts?.[planModalResp] || {};
+  const pending = updates.filter(item=>{
+    const existing = currentData[item.fecha] || { tipo:"numero", valor:0 };
+    if(existing.tipo === item.tipo){
+      if(item.tipo === "numero") return Number(existing.valor) !== Number(item.valor);
+      return (existing.valor || "").toString() !== (item.valor || "").toString();
+    }
+    return true;
+  });
+
+  if(!pending.length){
+    closePlanModal();
+    rpStatus.textContent = "Sin cambios.";
+    return;
+  }
+
+  planModalSave.disabled = true;
+  planModalSave.textContent = "Guardando…";
+  try{
+    for(const item of pending){
+      await savePlan(planModalResp, item.fecha, item.valor, item.tipo);
+    }
+    closePlanModal();
+    rpStatus.textContent = "Planificado guardado ✓";
+    await runReport();
+  }catch(err){
+    console.error(err);
+    alert("❌ Error al guardar planificado");
+    planModalSave.disabled = false;
+    planModalSave.textContent = "Guardar cambios";
+  }
+});
+
+/** ====== DRAWER REPORTE (por UNIR) ====== **/
+let drawer = null;
+let rpStart = null;
+let rpEnd = null;
+let rpRun = null;
+let rpStatus = null;
+let rpChips = null;
+let rpTable = null;
+let rpDetail = null;
+let rpToggle = null;
+let rpChart = null;
+let rpEditMode = false;
+
+async function injectReportDrawer(){
+  const host = document.getElementById("reportHost");
+  if(!host || host.dataset.loaded) return;
+  const src = host.dataset.src || "report.html";
+  try{
+    const response = await fetch(src);
+    if(!response.ok) throw new Error(`HTTP ${response.status}`);
+    host.innerHTML = await response.text();
+    host.dataset.loaded = "1";
+  }catch(err){
+    console.error("No se pudo cargar el reporte embebido:", err);
+    host.innerHTML = `<aside class="drawer" aria-hidden="true"><div class="drawer-head"><h3 style="margin:0">Reporte no disponible</h3></div><div class="row"><span class="muted">No se pudo cargar el recurso ${src}.</span></div></aside>`;
+    host.dataset.error = "1";
+  }
+}
+
+function setupReportElements(){
+  const btnOpen = document.getElementById("btnReport");
+  const btnClose = document.getElementById("rp_close");
+  drawer = document.getElementById("reportDrawer");
+  rpStart = document.getElementById("rp_start");
+  rpEnd = document.getElementById("rp_end");
+  rpRun = document.getElementById("rp_run");
+  rpStatus = document.getElementById("rp_status");
+  rpChips = document.getElementById("rp_chips");
+  rpTable = document.getElementById("rp_table");
+  rpDetail = document.getElementById("rp_detail");
+  rpToggle = document.getElementById("rp_toggleEdit");
+
+  if(!drawer || !rpStart || !rpEnd || !rpRun || !rpStatus || !rpChips || !rpTable || !rpDetail || !rpToggle){
+    btnOpen?.addEventListener("click", ()=> alert("No se pudo cargar el reporte. Intenta recargar la página."));
+    console.warn("Reporte no inicializado: faltan elementos en el fragmento embebido.");
+    return;
+  }
+
+  btnOpen?.addEventListener("click", openReport);
+  btnClose?.addEventListener("click", closeReport);
+  rpRun.addEventListener("click", runReport);
+  rpToggle.addEventListener("click", ()=>{
+    rpEditMode = !rpEditMode;
+    rpToggle.textContent = rpEditMode ? "Salir de edición" : "Editar Planificado";
+    runReport();
+  });
+  rpDetail.addEventListener("click", async (e)=>{
+    const btn = e.target.closest(".code-link");
+    if(!btn) return;
+    const cod = btn.dataset.code;
+    const unir = btn.dataset.unir;
+    await selectFromReport(unir, cod);
+  });
+}
+
+function openReport(){
+  if(!drawer) return;
+  defaultReportDates();
+  hydrateRespChips().then(()=> runReport());
+  drawer.classList.add("open");
+  drawer.setAttribute("aria-hidden","false");
+}
+function closeReport(){
+  if(!drawer) return;
+  drawer.classList.remove("open");
+  drawer.setAttribute("aria-hidden","true");
+}
+
+function dateKey(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; }
+function buildDays(from, to){ const a=[]; const cur=new Date(from); while(cur<=to){ a.push(new Date(cur)); cur.setDate(cur.getDate()+1);} return a; }
+function defaultReportDates(){
+  if(!rpStart || !rpEnd) return;
+  const today = new Date();
+  let year = today.getFullYear();
+  const startOct = new Date(year, 9, 2);
+  if(today < startOct){
+    year = year - 1;
+  }
+  const start = new Date(year, 9, 2);
+  const end = new Date(year, 9, 31);
+  rpStart.value = dateKey(start);
+  rpEnd.value = dateKey(end);
+}
+async function hydrateRespChips(){
+  if(!rpChips) return;
+  const { data, error } = await client.from("cod_pred").select("responsable").not("responsable","is",null);
+  if(error) return;
+
   if(currentUnirId) highlightGroup(currentUnirId, false);
 }
 
@@ -806,6 +1153,7 @@ function defaultReportDates(){
 async function hydrateRespChips(){
   const { data, error } = await client.from("cod_pred").select("responsable").not("responsable","is",null);
   if(error) return;
+
   const set = new Set((data||[]).map(r => (r.responsable||"").toString().trim().toLowerCase()).filter(Boolean));
   rpChips.innerHTML = "";
   if(set.size===0){ rpChips.innerHTML = `<span class="muted">No hay responsables registrados.</span>`; return; }
@@ -833,6 +1181,25 @@ async function fetchPlan(start, end){
   if(error){ console.warn("plan_pred:", error.message); return []; }
   return data||[];
 }
+
+async function savePlan(resp, fecha, valor, tipo="numero"){
+  const payload = { responsable: resp, fecha };
+  if(tipo === "texto"){
+    payload.valor = (valor ?? "").toString();
+  }else{
+    payload.valor = Number(valor) || 0;
+  }
+  const { error } = await client.from("plan_pred")
+    .upsert(payload, { onConflict: "responsable,fecha" });
+  if(error) throw error;
+}
+
+async function runReport(){
+  if(!rpStart || !rpEnd || !rpStatus || !rpDetail || !rpTable) return;
+  const start = rpStart.value, end = rpEnd.value;
+  if(!start || !end){ alert("Selecciona fechas"); return; }
+  const allowed = selectedResp(); // vacío => todos
+
 async function savePlan(resp, fecha, valor, tipo="numero"){
   const payload = { responsable: resp, fecha };
   if(tipo === "texto"){
@@ -849,6 +1216,7 @@ async function runReport(){
   const start = rpStart.value, end = rpEnd.value;
   if(!start || !end){ alert("Selecciona fechas"); return; }
   const allowed = selectedResp(); // vacío => todos
+
 
   rpStatus.textContent = "Cargando…";
   rpDetail.style.display = "none"; rpDetail.innerHTML = "";
@@ -881,6 +1249,7 @@ async function runReport(){
     }
     groups.get(key).cods.push(r.cod_prel||"");
   });
+
 
   // Días del rango
   const dFrom = new Date(start), dTo = new Date(end);
@@ -931,12 +1300,168 @@ async function runReport(){
   window._planCounts = planCounts;
   window._planDays = dKeys;
 
+  // Días del rango
+  const dFrom = new Date(start), dTo = new Date(end);
+  const days = buildDays(dFrom, dTo);
+  const dKeys = days.map(dateKey);
+
+  // Responsables activos (incluye planificados sin avance)
+  const respSet = new Set([...groups.values()].map(g=>g.responsable).filter(Boolean));
+
+  // Traer planificado y volcar al mapa
+  const planRows = await fetchPlan(start, end);
+  (planRows||[]).forEach(p=>{
+    const resp = (p.responsable||"").toString().trim().toLowerCase();
+    if(!resp) return;
+    if(allowed.size && !allowed.has(resp)) return;
+    respSet.add(resp);
+  });
+
+  const resps = [...respSet].sort();
+
+  // Contadores: elaborado por día (por UNIR), plan desde plan_pred
+  const doneCounts = {}; const planCounts = {};
+  resps.forEach(r=>{
+    doneCounts[r] = Object.fromEntries(dKeys.map(k=>[k,0]));
+    planCounts[r] = Object.fromEntries(dKeys.map(k=>[k,{ tipo:"numero", valor:0 }]));
+  });
+
+  // Mapa de celdas para detalle
+  const cellMapDone = new Map(); // `${resp}|${day}` -> array de grupos {comunidad,codigo_mtc,unirId,cods[]}
+
+  // Llenar 'done' (uno por UNIR)
+  groups.forEach(g=>{
+    const r = g.responsable; const k = g.fecha;
+    if(!r || !k || !(k in (doneCounts[r]||{}))) return;
+    doneCounts[r][k] += 1;
+    const ck = `${r}|${k}`; if(!cellMapDone.has(ck)) cellMapDone.set(ck, []);
+    cellMapDone.get(ck).push({ comunidad: g.comunidad, codigo_mtc: g.codigo_mtc, unirId: g.unirId, cods: g.cods });
+  });
+
+  (planRows||[]).forEach(p=>{
+    const r = (p.responsable||"").toString().trim().toLowerCase();
+    const k = (p.fecha||"").toString().slice(0,10);
+    if(!r || !k || !planCounts[r] || !dKeys.includes(k)) return;
+    if(allowed.size && !allowed.has(r)) return;
+    planCounts[r][k] = parsePlanValue(p.valor);
+  });
+
+
+  window._planCounts = planCounts;
+  window._planDays = dKeys;
+
   // KPIs
   const totalDone = [...groups.values()].length;
   document.getElementById("kpi_total").textContent = totalDone;
   document.getElementById("kpi_resps").textContent = resps.length;
 
   // Render tabla
+
+  let tableHtml = "<tr>";
+  tableHtml += `<th class="sticky l1">RESPONSABLE</th>`;
+  dKeys.forEach(k=>{
+    const d = new Date(k);
+    const dayIdx = d.getDay();
+    const classes = dayIdx === 0 ? "day-head sunday" : "day-head";
+    tableHtml += `<th class="${classes}">${String(d.getDate()).padStart(2,'0')}<div class="muted">${["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][dayIdx]}</div></th>`;
+  });
+  tableHtml += `<th>Total</th></tr>`;
+
+  resps.forEach(r=>{
+    // Fila plan
+    tableHtml += `<tr>`;
+    if(rpEditMode){
+      tableHtml += `<td class="sticky l1"><div><b>${cap(r)}</b> — <span class="muted">Planificado</span></div></td>`;
+    }else{
+      tableHtml += `<td class="sticky l1"><div class="plan-header"><div><b>${cap(r)}</b> — <span class="muted">Planificado</span></div><button type="button" class="btn-small plan-bulk-btn" data-resp="${r}">Actualizar avance diario</button></div></td>`;
+    }
+    let rowPlan = 0;
+    dKeys.forEach(k=>{
+      const entry = planCounts[r][k] || { tipo:"numero", valor:0 };
+      const dayIdx = new Date(k).getDay();
+      const dayClass = dayIdx === 0 ? "sunday" : "";
+      if(entry.tipo === "texto"){
+        if(rpEditMode){
+          tableHtml += `<td class="${dayClass}"><input class="ovr-input" data-resp="${r}" data-date="${k}" data-type="texto" type="text" value="${esc(entry.valor)}"></td>`;
+        }else{
+          tableHtml += `<td class="${dayClass}"><span class="plan-text">${esc(entry.valor)}</span></td>`;
+        }
+      }else{
+        const numVal = Number(entry.valor) || 0;
+        rowPlan += numVal;
+        if(rpEditMode){
+          tableHtml += `<td class="${dayClass}"><input class="ovr-input" data-resp="${r}" data-date="${k}" data-type="numero" type="number" min="0" value="${numVal}"></td>`;
+        }else{
+          tableHtml += `<td class="${dayClass}">${numVal}</td>`;
+        }
+      }
+    });
+    tableHtml += `<td><b>${rowPlan}</b></td>`;
+    tableHtml += `</tr>`;
+
+    // Fila elaborado
+    tableHtml += `<tr>`;
+    tableHtml += `<td class="sticky l1"><b>${cap(r)}</b> — <span class="muted">Elaborado</span></td>`;
+    let rowDone = 0;
+    dKeys.forEach(k=>{
+      const n = doneCounts[r]?.[k] || 0; rowDone += n;
+      const dayIdx = new Date(k).getDay();
+      const dayClass = dayIdx === 0 ? "sunday" : "";
+      if(n>0){
+        tableHtml += `<td class="clickable ${dayClass}" onclick="openRpCell('${r}','${k}')"><b>${n}</b></td>`;
+      }else{
+        tableHtml += `<td class="${dayClass} muted">0</td>`;
+      }
+    });
+    tableHtml += `<td><b>${rowDone}</b></td>`;
+    tableHtml += `</tr>`;
+  });
+
+  rpTable.innerHTML = tableHtml;
+
+  if(!rpEditMode){
+    rpTable.querySelectorAll(".plan-bulk-btn").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const resp = btn.getAttribute("data-resp");
+        if(resp) openPlanModal(resp);
+      });
+    });
+  }
+
+  // Guardado inline de planificado
+  rpTable.querySelectorAll(".ovr-input").forEach(inp=>{
+    inp.addEventListener("change", async (e)=>{
+      const resp = e.target.getAttribute("data-resp");
+      const fecha = e.target.getAttribute("data-date");
+      if(!resp || !fecha) return;
+      const tipo = e.target.dataset.type === "texto" ? "texto" : (e.target.type === "text" ? "texto" : "numero");
+      try{
+        let valor;
+        if(tipo === "texto"){
+          valor = (e.target.value || "Vacaciones").trim() || "Vacaciones";
+        }else{
+          const raw = e.target.value === "" ? "0" : e.target.value;
+          const num = Number(raw);
+          if(!Number.isFinite(num) || num < 0){
+            alert("Ingresa un número válido (0 o mayor)");
+            const prev = window._planCounts?.[resp]?.[fecha];
+            e.target.value = Number(prev?.valor || 0);
+            return;
+          }
+          valor = num;
+        }
+        await savePlan(resp, fecha, valor, tipo);
+        rpStatus.textContent = "Planificado guardado ✓";
+        if(!window._planCounts) window._planCounts = {};
+        if(!window._planCounts[resp]) window._planCounts[resp] = {};
+        window._planCounts[resp][fecha] = { tipo, valor };
+      }catch(err){
+        console.error(err);
+        rpStatus.textContent = "Error al guardar planificado";
+      }
+    });
+  });
+
 
   let html = "<tr>";
   html += `<th class="sticky l1">RESPONSABLE</th>`;
@@ -1095,6 +1620,7 @@ async function runReport(){
   });
 
 
+
   rpTable.querySelectorAll(".plan-edit-btn").forEach(btn=>{
     btn.addEventListener("click", async ()=>{
       const resp = btn.getAttribute("data-resp");
@@ -1127,7 +1653,11 @@ async function runReport(){
 
 
   // Gráfico de totales diarios (elaborado por UNIR)
+
   const totals = dKeys.map(k => resps.reduce((acc,r)=> acc + (doneCounts[r]?.[k]||0), 0));
+
+  const totals = dKeys.map(k => resps.reduce((acc,r)=> acc + (doneCounts[r]?.[k]||0), 0));
+
   renderReportChart(dKeys, totals);
 
   // Exponer mapa para detalle
@@ -1157,15 +1687,6 @@ window.openRpCell = function(resp, ymd){
   rpDetail.style.display = "block";
 };
 
-// Delegación de click para seleccionar código desde el reporte
-rpDetail.addEventListener("click", async (e)=>{
-  const btn = e.target.closest(".code-link");
-  if(!btn) return;
-  const cod = btn.dataset.code;
-  const unir = btn.dataset.unir;
-  await selectFromReport(unir, cod);
-});
-
 async function selectFromReport(unir, cod){
   await showGroup(Number(unir));
   selectedCodPrel = cod;
@@ -1181,8 +1702,12 @@ async function selectFromReport(unir, cod){
 }
 
 function renderReportChart(dKeys, totals){
-  document.getElementById("chartWrap").style.display = "block";
-  const ctx = document.getElementById("rp_chart").getContext("2d");
+  const wrap = document.getElementById("chartWrap");
+  const canvas = document.getElementById("rp_chart");
+  if(!wrap || !canvas) return;
+  const ctx = canvas.getContext("2d");
+  if(!ctx) return;
+  wrap.style.display = "block";
   if(rpChart) rpChart.destroy();
   rpChart = new Chart(ctx, {
     type: 'bar',
@@ -1192,6 +1717,28 @@ function renderReportChart(dKeys, totals){
     },
     options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } }
   });
+
+}
+
+function esc(s){ return (s??"").toString().replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+function cap(r){ return (r||"").replace(/\b\w/g,m=>m.toUpperCase()); }
+function parsePlanValue(raw){
+  if(raw === null || raw === undefined) return { tipo:"numero", valor:0 };
+  const str = raw.toString();
+  if(str.trim() === "") return { tipo:"numero", valor:0 };
+  const num = Number(str);
+  if(Number.isFinite(num)) return { tipo:"numero", valor:num };
+  return { tipo:"texto", valor:str };
+}
+
+async function initReportSection(){
+  await injectReportDrawer();
+  setupReportElements();
+}
+
+/** ====== RESIZER ====== **/
+(function initGutter(){
+
 }
 
 function esc(s){ return (s??"").toString().replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
@@ -1207,6 +1754,7 @@ function parsePlanValue(raw){
 
 /** ====== RESIZER ====== **/
 (function initGutter(){
+
   const left = document.getElementById("leftPane");
   const gutter = document.getElementById("gutter");
   let dragging=false, startX=0, startLeft=0;
@@ -1227,7 +1775,8 @@ function parsePlanValue(raw){
 
 /** ====== INIT ====== **/
 (async function init(){
-  await hydrateFilterOptions();
+  await hydrateLookups();
+  await initReportSection();
   await loadAllPredios();
 })();
 </script>
