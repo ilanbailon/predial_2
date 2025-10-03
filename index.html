@@ -78,12 +78,18 @@
     .modal-back{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.45);z-index:7000}
     .modal{background:#fff;border-radius:12px;padding:16px;width:min(520px,90vw);max-height:85vh;overflow:auto;box-shadow:0 24px 48px rgba(15,23,42,.28)}
 
+
     
     .plan-text{display:inline-block;padding:2px 8px;border-radius:999px;background:#fef3c7;color:#92400e;font-weight:600;font-size:12px}
     .plan-header{display:flex;flex-direction:column;gap:6px}
     .plan-header button{align-self:flex-start}
     .day-head.sunday,.report td.sunday{background:#fee2e2!important;color:#b91c1c}
     .report td.sunday .plan-text{background:#fecaca;color:#7f1d1d}
+
+    .plan-cell{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+    .plan-edit-btn{padding:2px 6px;border-radius:6px;border:1px solid var(--line);background:#fff;font-size:12px;cursor:pointer;color:var(--text)}
+    .plan-edit-btn:hover{border-color:var(--accent);color:var(--accent-dark)}
+
 
     /* ===== Drawer Reporte ===== */
     .drawer{
@@ -931,6 +937,7 @@ async function runReport(){
   document.getElementById("kpi_resps").textContent = resps.length;
 
   // Render tabla
+
   let html = "<tr>";
   html += `<th class="sticky l1">RESPONSABLE</th>`;
   dKeys.forEach(k=>{
@@ -1002,11 +1009,56 @@ async function runReport(){
     });
   }
 
+
+  let html = "<tr>";
+  html += `<th class="sticky l1">RESPONSABLE</th>`;
+  dKeys.forEach(k=>{
+    const d = new Date(k);
+    html += `<th>${String(d.getDate()).padStart(2,'0')}<div class="muted">${["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][d.getDay()]}</div></th>`;
+  });
+  html += `<th>Total</th></tr>`;
+
+  resps.forEach(r=>{
+    // Fila plan
+    html += `<tr>`;
+    html += `<td class="sticky l1"><b>${cap(r)}</b> — <span class="muted">Planificado</span></td>`;
+    let rowPlan = 0;
+    dKeys.forEach(k=>{
+      const val = planCounts[r][k] || 0; rowPlan += val;
+      if(rpEditMode){
+        html += `<td><input class="ovr-input" data-resp="${r}" data-date="${k}" type="number" min="0" value="${val}"></td>`;
+      }else{
+        html += `<td><span class="plan-cell"><span class="plan-value" data-resp="${r}" data-date="${k}">${val}</span><button type="button" class="plan-edit-btn" data-resp="${r}" data-date="${k}" data-val="${val}">✏️</button></span></td>`;
+      }
+    });
+    html += `<td><b>${rowPlan}</b></td>`;
+    html += `</tr>`;
+
+    // Fila elaborado
+    html += `<tr>`;
+    html += `<td class="sticky l1"><b>${cap(r)}</b> — <span class="muted">Elaborado</span></td>`;
+    let rowDone = 0;
+    dKeys.forEach(k=>{
+      const n = doneCounts[r][k] || 0; rowDone += n;
+      if(n>0){
+        html += `<td class="clickable" onclick="openRpCell('${r}','${k}')"><b>${n}</b></td>`;
+      }else{
+        html += `<td class="muted">0</td>`;
+      }
+    });
+    html += `<td><b>${rowDone}</b></td>`;
+    html += `</tr>`;
+  });
+
+  rpTable.innerHTML = html;
+
+
   // Guardado inline de planificado
   rpTable.querySelectorAll(".ovr-input").forEach(inp=>{
     inp.addEventListener("change", async (e)=>{
       const resp = e.target.getAttribute("data-resp");
       const fecha = e.target.getAttribute("data-date");
+
       if(!resp || !fecha) return;
       const tipo = e.target.dataset.type === "texto" ? "texto" : (e.target.type === "text" ? "texto" : "numero");
       try{
@@ -1029,12 +1081,50 @@ async function runReport(){
         if(!window._planCounts) window._planCounts = {};
         if(!window._planCounts[resp]) window._planCounts[resp] = {};
         window._planCounts[resp][fecha] = { tipo, valor };
+
+      const valor = Number(e.target.value)||0;
+      try{
+        await savePlan(resp, fecha, valor);
+        rpStatus.textContent = "Planificado guardado ✓";
+
       }catch(err){
         console.error(err);
         rpStatus.textContent = "Error al guardar planificado";
       }
     });
   });
+
+
+  rpTable.querySelectorAll(".plan-edit-btn").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const resp = btn.getAttribute("data-resp");
+      const fecha = btn.getAttribute("data-date");
+      const current = Number(btn.getAttribute("data-val")||0);
+      const promptLabel = `Nuevo planificado para ${cap(resp)} — ${fecha}`;
+      const input = prompt(promptLabel, current);
+      if(input === null) return;
+      const parsed = Number(input);
+      if(!Number.isFinite(parsed) || parsed < 0){
+        alert("Ingresa un número válido (0 o mayor)");
+        return;
+      }
+      btn.disabled = true;
+      try{
+        await savePlan(resp, fecha, parsed);
+        rpStatus.textContent = "Planificado guardado ✓";
+        btn.setAttribute("data-val", parsed);
+        const container = btn.closest(".plan-cell");
+        const valueSpan = container?.querySelector(".plan-value");
+        if(valueSpan) valueSpan.textContent = parsed;
+      }catch(err){
+        console.error(err);
+        alert("❌ Error al guardar planificado");
+      }finally{
+        btn.disabled = false;
+      }
+    });
+  });
+
 
   // Gráfico de totales diarios (elaborado por UNIR)
   const totals = dKeys.map(k => resps.reduce((acc,r)=> acc + (doneCounts[r]?.[k]||0), 0));
