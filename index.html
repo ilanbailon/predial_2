@@ -75,6 +75,13 @@
     .btn-small{padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer}
     .btn-small:hover{border-color:var(--accent)}
 
+    .modal-back{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.45);z-index:7000}
+    .modal{background:#fff;border-radius:12px;padding:16px;width:min(520px,90vw);max-height:85vh;overflow:auto;box-shadow:0 24px 48px rgba(15,23,42,.28)}
+
+    .plan-cell{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+    .plan-edit-btn{padding:2px 6px;border-radius:6px;border:1px solid var(--line);background:#fff;font-size:12px;cursor:pointer;color:var(--text)}
+    .plan-edit-btn:hover{border-color:var(--accent);color:var(--accent-dark)}
+
     /* ===== Drawer Reporte ===== */
     .drawer{
       position:fixed; top:60px; right:0;
@@ -621,8 +628,16 @@ rpToggle.addEventListener("click", ()=>{ rpEditMode = !rpEditMode; rpToggle.text
 function dateKey(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; }
 function buildDays(from, to){ const a=[]; const cur=new Date(from); while(cur<=to){ a.push(new Date(cur)); cur.setDate(cur.getDate()+1);} return a; }
 function defaultReportDates(){
-  const end = new Date(); const start = new Date(); start.setDate(end.getDate()-30);
-  rpStart.value = dateKey(start); rpEnd.value = dateKey(end);
+  const today = new Date();
+  let year = today.getFullYear();
+  const startOct = new Date(year, 9, 2);
+  if(today < startOct){
+    year = year - 1;
+  }
+  const start = new Date(year, 9, 2);
+  const end = new Date(year, 9, 31);
+  rpStart.value = dateKey(start);
+  rpEnd.value = dateKey(end);
 }
 async function hydrateRespChips(){
   const { data, error } = await client.from("cod_pred").select("responsable").not("responsable","is",null);
@@ -754,7 +769,7 @@ async function runReport(){
       if(rpEditMode){
         html += `<td><input class="ovr-input" data-resp="${r}" data-date="${k}" type="number" min="0" value="${val}"></td>`;
       }else{
-        html += `<td>${val}</td>`;
+        html += `<td><span class="plan-cell"><span class="plan-value" data-resp="${r}" data-date="${k}">${val}</span><button type="button" class="plan-edit-btn" data-resp="${r}" data-date="${k}" data-val="${val}">✏️</button></span></td>`;
       }
     });
     html += `<td><b>${rowPlan}</b></td>`;
@@ -790,6 +805,36 @@ async function runReport(){
       }catch(err){
         console.error(err);
         rpStatus.textContent = "Error al guardar planificado";
+      }
+    });
+  });
+
+  rpTable.querySelectorAll(".plan-edit-btn").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const resp = btn.getAttribute("data-resp");
+      const fecha = btn.getAttribute("data-date");
+      const current = Number(btn.getAttribute("data-val")||0);
+      const promptLabel = `Nuevo planificado para ${cap(resp)} — ${fecha}`;
+      const input = prompt(promptLabel, current);
+      if(input === null) return;
+      const parsed = Number(input);
+      if(!Number.isFinite(parsed) || parsed < 0){
+        alert("Ingresa un número válido (0 o mayor)");
+        return;
+      }
+      btn.disabled = true;
+      try{
+        await savePlan(resp, fecha, parsed);
+        rpStatus.textContent = "Planificado guardado ✓";
+        btn.setAttribute("data-val", parsed);
+        const container = btn.closest(".plan-cell");
+        const valueSpan = container?.querySelector(".plan-value");
+        if(valueSpan) valueSpan.textContent = parsed;
+      }catch(err){
+        console.error(err);
+        alert("❌ Error al guardar planificado");
+      }finally{
+        btn.disabled = false;
       }
     });
   });
