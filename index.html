@@ -881,7 +881,7 @@ planModalSave?.addEventListener("click", async ()=>{
 });
 
 /** ====== DRAWER REPORTE (por UNIR) ====== **/
-let drawer = null;
+let reportDrawerEl = null;
 let rpStart = null;
 let rpEnd = null;
 let rpRun = null;
@@ -912,7 +912,7 @@ async function injectReportDrawer(){
 function setupReportElements(){
   const btnOpen = document.getElementById("btnReport");
   const btnClose = document.getElementById("rp_close");
-  drawer = document.getElementById("reportDrawer");
+  reportDrawerEl = document.getElementById("reportDrawer");
   rpStart = document.getElementById("rp_start");
   rpEnd = document.getElementById("rp_end");
   rpRun = document.getElementById("rp_run");
@@ -922,7 +922,7 @@ function setupReportElements(){
   rpDetail = document.getElementById("rp_detail");
   rpToggle = document.getElementById("rp_toggleEdit");
 
-  if(!drawer || !rpStart || !rpEnd || !rpRun || !rpStatus || !rpChips || !rpTable || !rpDetail || !rpToggle){
+  if(!reportDrawerEl || !rpStart || !rpEnd || !rpRun || !rpStatus || !rpChips || !rpTable || !rpDetail || !rpToggle){
     btnOpen?.addEventListener("click", ()=> alert("No se pudo cargar el reporte. Intenta recargar la página."));
     console.warn("Reporte no inicializado: faltan elementos en el fragmento embebido.");
     return;
@@ -946,16 +946,16 @@ function setupReportElements(){
 }
 
 function openReport(){
-  if(!drawer) return;
+  if(!reportDrawerEl) return;
   defaultReportDates();
   hydrateRespChips().then(()=> runReport());
-  drawer.classList.add("open");
-  drawer.setAttribute("aria-hidden","false");
+  reportDrawerEl.classList.add("open");
+  reportDrawerEl.setAttribute("aria-hidden","false");
 }
 function closeReport(){
-  if(!drawer) return;
-  drawer.classList.remove("open");
-  drawer.setAttribute("aria-hidden","true");
+  if(!reportDrawerEl) return;
+  reportDrawerEl.classList.remove("open");
+  reportDrawerEl.setAttribute("aria-hidden","true");
 }
 
 function dateKey(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; }
