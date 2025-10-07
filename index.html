@@ -107,12 +107,12 @@
     .leader-name{font-weight:600;color:#0f172a}
     .leader-meta{display:flex;align-items:center;gap:8px;font-size:13px;color:#475569}
     .leader-meta .badge{background:#e0f2fe;border:1px solid #bae6fd;border-radius:999px;padding:2px 10px;font-size:12px;color:#0c4a6e}
-    table.report{border-collapse:collapse;width:calc(100% - 32px);margin:0 16px 12px}
+    table.report{border-collapse:collapse;width:auto;min-width:100%;margin:0}
     table.report th, table.report td{border:1px solid #e5e7eb;padding:6px 8px;text-align:center;vertical-align:top;background:#fff;position:relative}
     th.sticky{position:sticky;z-index:3;background:#f6f6f6}
     td.sticky{position:sticky;z-index:2;background:#fff}
-    th.sticky.l1, td.sticky.l1 { left:0; min-width:220px; text-align:left;}
-    th.sticky.l2, td.sticky.l2 { left:220px; min-width:130px; text-align:left; background:#fff; z-index:2;}
+    th.sticky.l1, td.sticky.l1 { left:0; min-width:220px; text-align:left; background:#fff; z-index:4;}
+    th.sticky.l2, td.sticky.l2 { left:220px; min-width:130px; text-align:left; background:#fff; z-index:3;}
     .type-cell{font-weight:600;color:#475569}
     .resp-cell{font-weight:700;font-size:15px;text-transform:capitalize;padding-right:12px}
     .ovr-input{width:62px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:8px;text-align:center}
@@ -1124,7 +1124,7 @@ async function runReport(){
     // Fila planificado
     let rowPlan = 0;
     html += `<tr class="plan-row">`;
-    html += `<td class="sticky l1"><div class="resp-cell">${respLabel}</div></td>`;
+    html += `<td class="sticky l1" rowspan="2"><div class="resp-cell">${respLabel}</div></td>`;
     html += `<td class="sticky l2 type-cell">Planificado</td>`;
     dMeta.forEach(({key,dow})=>{
       const val = planCounts[r][key] || 0; rowPlan += val;
@@ -1160,7 +1160,6 @@ async function runReport(){
     // Fila elaborado
     let rowDone = 0;
     html += `<tr class="done-row">`;
-    html += `<td class="sticky l1"><div class="resp-cell">${respLabel}</div></td>`;
     html += `<td class="sticky l2 type-cell">Elaborado</td>`;
     dMeta.forEach(({key,dow})=>{
       const n = doneCounts[r][key] || 0; rowDone += n;
