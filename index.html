@@ -22,7 +22,8 @@
 
       --sat:#e0f2ff;   /* sábado (azul muy claro)   */
       --sun:#fee2e2;   /* domingo (rojito)          */
-      --plan0:#ffe4e6; /* planificado = 0 (rojito)  */
+      --comment-bg:#fef9c3; /* comentario */
+      --comment-ring:#facc15;
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;overflow:hidden;}
@@ -107,16 +108,64 @@
     .leader-meta{display:flex;align-items:center;gap:8px;font-size:13px;color:#475569}
     .leader-meta .badge{background:#e0f2fe;border:1px solid #bae6fd;border-radius:999px;padding:2px 10px;font-size:12px;color:#0c4a6e}
     table.report{border-collapse:collapse;width:calc(100% - 32px);margin:0 16px 12px}
-    table.report th, table.report td{border:1px solid #e5e7eb;padding:6px 8px;text-align:center;vertical-align:top;background:#fff}
+    table.report th, table.report td{border:1px solid #e5e7eb;padding:6px 8px;text-align:center;vertical-align:top;background:#fff;position:relative}
     th.sticky{position:sticky;z-index:3;background:#f6f6f6}
     td.sticky{position:sticky;z-index:2;background:#fff}
     th.sticky.l1, td.sticky.l1 { left:0; min-width:220px; text-align:left;}
-    .ovr-input{width:64px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:8px;text-align:center}
+    th.sticky.l2, td.sticky.l2 { left:220px; min-width:130px; text-align:left; background:#fff; z-index:2;}
+    .type-cell{font-weight:600;color:#475569}
+    .resp-cell{font-weight:700;font-size:15px;text-transform:capitalize;padding-right:12px}
+    .ovr-input{width:62px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:8px;text-align:center}
+    #rp_tableWrap{overflow:auto;border:1px solid #eee;border-radius:10px;margin:0 16px 12px;background:#fff;position:relative}
 
     /* Colores especiales en reporte */
     .col-sat{ background:var(--sat) !important; }
     .col-sun{ background:var(--sun) !important; }
-    .plan-zero{ background:var(--plan0) !important; }
+    .plan-zero{ background:transparent !important; }
+
+    .comment-cell{background:var(--comment-bg) !important; box-shadow:inset 0 0 0 1px rgba(250,204,21,.5);}
+    .comment-cell.comment-linked{box-shadow:inset 0 0 0 1px rgba(250,204,21,.35);}
+    .comment-btn{border:1px solid #cbd5e1;background:#fff;color:#475569;border-radius:999px;padding:2px 6px;font-size:12px;cursor:pointer;transition:all .15s;line-height:1;display:inline-flex;align-items:center;gap:4px}
+    .comment-btn:hover{background:#eef2ff;border-color:#94a3b8;color:#1e293b}
+    .comment-btn.has-comment{background:rgba(250,204,21,.18);border-color:rgba(250,204,21,.8);color:#92400e}
+    .comment-icon{font-size:13px;line-height:1}
+    .plan-cell{display:flex;align-items:center;justify-content:center;gap:6px}
+    .plan-cell.readonly{justify-content:flex-start}
+    .plan-cell.readonly span{font-weight:600}
+    .plan-cell.readonly .value{min-width:24px;text-align:center}
+
+    /* Hoy */
+    :root{
+      --today-bg:#f5f3ff;
+      --today-ring:rgba(99,102,241,.45);
+      --today-wash:rgba(99,102,241,.18);
+    }
+    .today-col{
+      position:relative;
+      background:var(--today-bg) !important;
+      box-shadow:inset 0 0 0 9999px var(--today-wash);
+    }
+    .today-col::after{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      border:2px solid var(--today-ring);
+      border-radius:8px;
+      pointer-events:none;
+    }
+
+    /* Comentarios en planificado */
+    .comment-preview{display:none}
+    .comment-popover{position:absolute;min-width:240px;max-width:280px;background:#fff;border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 18px 40px rgba(15,23,42,.2);padding:12px;z-index:9000;display:none}
+    .comment-popover.open{display:block}
+    .comment-popover h5{margin:0 0 6px;font-size:13px;color:#334155;font-weight:700}
+    .comment-popover textarea{width:100%;min-height:96px;border:1px solid #cbd5e1;border-radius:8px;padding:6px;font-family:inherit;resize:vertical;color:#0f172a}
+    .comment-popover textarea:focus{outline:2px solid rgba(14,165,233,.35)}
+    .comment-popover .comment-text{font-size:13px;color:#1f2937;white-space:pre-wrap;max-height:160px;overflow:auto}
+    .comment-popover .actions{margin-top:10px;display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+    .comment-popover .actions button{padding:6px 10px;border-radius:8px;border:1px solid #cbd5e1;background:#f8fafc;color:#1f2937;font-size:12px;cursor:pointer}
+    .comment-popover .actions button.primary{background:#0ea5e9;border-color:#0284c7;color:#fff}
+    .comment-popover .actions button.danger{background:#fee2e2;border-color:#fca5a5;color:#b91c1c}
 
     /* Hoy */
     :root{
@@ -364,16 +413,18 @@
       </div>
     </div>
 
-    <div style="overflow:auto;border:1px solid #eee;border-radius:10px;margin:0 16px 12px">
+    <div id="rp_tableWrap">
       <table id="rp_table" class="report"></table>
     </div>
 
     <div id="chartWrap" style="display:none">
-      <canvas id="rp_chart" height="280"></canvas>
+      <canvas id="rp_chart" height="336"></canvas>
     </div>
 
     <div id="rp_detail" style="display:none"></div>
   </aside>
+
+  <div id="commentPopover" class="comment-popover" role="dialog" aria-modal="false"></div>
 
 <script>
 /** ====== CONFIG ====== **/
@@ -735,10 +786,13 @@ const rpRun    = document.getElementById("rp_run");
 const rpStatus = document.getElementById("rp_status");
 const rpChips  = document.getElementById("rp_chips");
 const rpTable  = document.getElementById("rp_table");
+const rpTableWrap = document.getElementById("rp_tableWrap");
 const rpDetail = document.getElementById("rp_detail");
 const rpToggle = document.getElementById("rp_toggleEdit");
 let rpChart = null;
 let rpEditMode = false;
+const commentPopoverEl = document.getElementById("commentPopover");
+let commentPopoverState = null;
 
 btnOpen.addEventListener("click", openReport);
 btnClose.addEventListener("click", closeReport);
@@ -752,6 +806,7 @@ function openReport(){
 function closeReport(){
   drawer.classList.remove("open");
   drawer.setAttribute("aria-hidden","true");
+  closeCommentPopover();
 }
 rpRun.addEventListener("click", runReport);
 rpToggle.addEventListener("click", ()=>{ rpEditMode = !rpEditMode; rpToggle.textContent = rpEditMode ? "✅ Terminar edición" : "✏️ Editar Planificado"; runReport(); });
@@ -781,6 +836,140 @@ function selectedResp(){
   const set = new Set();
   document.querySelectorAll(".rp-resp:checked").forEach(cb=> set.add(cb.value));
   return set;
+}
+
+function handleCommentOutside(e){
+  if(!commentPopoverEl || !commentPopoverEl.classList.contains('open')) return;
+  if(commentPopoverEl.contains(e.target)) return;
+  if(commentPopoverState?.anchor && commentPopoverState.anchor.contains(e.target)) return;
+  closeCommentPopover();
+}
+
+function handleCommentEscape(e){
+  if(e.key === 'Escape') closeCommentPopover();
+}
+
+function closeCommentPopover(){
+  if(!commentPopoverEl) return;
+  commentPopoverEl.classList.remove('open');
+  commentPopoverEl.innerHTML = '';
+  commentPopoverEl.setAttribute('aria-modal','false');
+  document.removeEventListener('mousedown', handleCommentOutside);
+  document.removeEventListener('keydown', handleCommentEscape);
+  commentPopoverState = null;
+}
+
+function openCommentPopover({ resp, fecha, anchor, comment, editable }){
+  if(!commentPopoverEl || !anchor) return;
+  if(commentPopoverState && commentPopoverState.anchor === anchor && commentPopoverEl.classList.contains('open')){
+    closeCommentPopover();
+    return;
+  }
+  closeCommentPopover();
+
+  commentPopoverState = { resp, fecha, anchor, editable };
+  const title = `Comentario — ${cap(resp)} (${fecha})`;
+  let inner = `<h5>${esc(title)}</h5>`;
+
+  if(editable){
+    inner += `
+      <textarea id="commentInput" placeholder="Escribe un comentario..."></textarea>
+      <div class="actions">
+        ${comment ? '<button type="button" data-action="delete" class="danger">Eliminar</button>' : ''}
+        <button type="button" data-action="cancel">Cancelar</button>
+        <button type="button" data-action="save" class="primary">Guardar</button>
+      </div>`;
+  }else{
+    const body = comment ? esc(comment).replace(/\n/g,'<br>') : '<span class="muted">Sin comentario</span>';
+    inner += `
+      <div class="comment-text">${body}</div>
+      <div class="actions"><button type="button" data-action="close" class="primary">Cerrar</button></div>`;
+  }
+
+  commentPopoverEl.innerHTML = inner;
+  commentPopoverEl.classList.add('open');
+  commentPopoverEl.setAttribute('aria-modal', editable ? 'true' : 'false');
+
+  requestAnimationFrame(()=>{
+    const rect = anchor.getBoundingClientRect();
+    const popWidth = commentPopoverEl.offsetWidth;
+    const popHeight = commentPopoverEl.offsetHeight;
+    let left = rect.left + window.scrollX + (rect.width/2) - (popWidth/2);
+    const minLeft = window.scrollX + 12;
+    const maxLeft = window.scrollX + window.innerWidth - popWidth - 12;
+    if(left < minLeft) left = minLeft;
+    if(left > maxLeft) left = maxLeft;
+    let top = rect.bottom + window.scrollY + 8;
+    const maxTop = window.scrollY + window.innerHeight - popHeight - 12;
+    if(top > maxTop){
+      top = rect.top + window.scrollY - popHeight - 8;
+      if(top < window.scrollY + 12) top = window.scrollY + 12;
+    }
+    commentPopoverEl.style.left = `${left}px`;
+    commentPopoverEl.style.top = `${top}px`;
+  });
+
+  if(editable){
+    const textarea = commentPopoverEl.querySelector('#commentInput');
+    if(textarea){
+      textarea.value = comment || '';
+      textarea.focus();
+    }
+    const saveBtn = commentPopoverEl.querySelector('[data-action="save"]');
+    if(saveBtn){
+      saveBtn.addEventListener('click', async ()=>{
+        if(!textarea) return;
+        const raw = textarea.value;
+        const trimmed = raw.trim();
+        const payload = { coment: trimmed === '' ? null : raw };
+        try{
+          await savePlanEntry(resp, fecha, payload);
+          rpStatus.textContent = trimmed === '' ? 'Comentario eliminado ✓' : 'Comentario guardado ✓';
+          closeCommentPopover();
+          await runReport();
+        }catch(err){
+          console.error(err);
+          rpStatus.textContent = 'Error al guardar comentario';
+        }
+      });
+    }
+    const cancelBtn = commentPopoverEl.querySelector('[data-action="cancel"]');
+    if(cancelBtn) cancelBtn.addEventListener('click', closeCommentPopover);
+    const deleteBtn = commentPopoverEl.querySelector('[data-action="delete"]');
+    if(deleteBtn){
+      deleteBtn.addEventListener('click', async ()=>{
+        try{
+          await savePlanEntry(resp, fecha, { coment: null });
+          rpStatus.textContent = 'Comentario eliminado ✓';
+          closeCommentPopover();
+          await runReport();
+        }catch(err){
+          console.error(err);
+          rpStatus.textContent = 'Error al eliminar comentario';
+        }
+      });
+    }
+  }else{
+    const closeBtn = commentPopoverEl.querySelector('[data-action="close"]');
+    if(closeBtn) closeBtn.addEventListener('click', closeCommentPopover);
+  }
+
+  document.addEventListener('mousedown', handleCommentOutside);
+  document.addEventListener('keydown', handleCommentEscape);
+}
+
+function scrollReportToToday(idx){
+  if(idx == null || idx < 0) return;
+  if(!rpTableWrap) return;
+  requestAnimationFrame(()=>{
+    const headerRow = rpTable.querySelector('tr');
+    if(!headerRow) return;
+    const target = headerRow.querySelector(`th:nth-child(${idx + 3})`);
+    if(!target) return;
+    const desired = target.offsetLeft - (rpTableWrap.clientWidth/2) + (target.offsetWidth/2);
+    const left = desired < 0 ? 0 : desired;
+    rpTableWrap.scrollTo({ left, behavior: 'smooth' });
+  });
 }
 
 // Tabla 'plan_pred' (responsable, fecha, valor)
@@ -815,6 +1004,7 @@ async function runReport(){
   const allowed = selectedResp(); // vacío => todos
 
   rpStatus.textContent = "Cargando…";
+  closeCommentPopover();
   rpDetail.style.display = "none"; rpDetail.innerHTML = "";
 
   const year = parseYmd(start).getFullYear();
@@ -944,6 +1134,7 @@ async function runReport(){
   // Render tabla
   let html = "<tr>";
   html += `<th class="sticky l1">RESPONSABLE</th>`;
+  html += `<th class="sticky l2">TIPO</th>`;
   dMeta.forEach(({key,dow})=>{
     const d = parseYmd(key);
     const clsBase = dow===0 ? "col-sun" : (dow===6 ? "col-sat" : "");
@@ -954,33 +1145,37 @@ async function runReport(){
   html += `<th>Total</th></tr>`;
 
   resps.forEach(r=>{
-    // Fila plan (editable solo L-V)
-    html += `<tr>`;
-    html += `<td class="sticky l1"><b>${cap(r)}</b> — <span class="muted">Planificado</span></td>`;
+    const respLabel = esc(cap(r));
+    const commentCols = new Set();
+
+    // Fila planificado
     let rowPlan = 0;
+    html += `<tr class="plan-row">`;
+    html += `<td class="sticky l1" rowspan="2"><div class="resp-cell">${respLabel}</div></td>`;
+    html += `<td class="sticky l2 type-cell">Planificado</td>`;
     dMeta.forEach(({key,dow})=>{
       const val = planCounts[r][key] || 0; rowPlan += val;
       const comment = planComments[r][key] || "";
-      const baseCls = (dow===0 ? "col-sun" : (dow===6 ? "col-sat" : ""));
-      const zeroCls = (val===0 && dow!==0 && dow!==6) ? "plan-zero" : "";
-      const todayCls = (key===todayKey) ? "today-col" : "";
-      const cls = `${baseCls} ${zeroCls} ${todayCls}`.trim();
-      const commentPreview = comment ? `<div class="comment-preview" title="${esc(comment)}">${esc(comment).replace(/\n/g,'<br>')}</div>` : "";
+      const hasComment = !!comment;
+      if(hasComment) commentCols.add(key);
+      const classes = [
+        dow===0 ? "col-sun" : (dow===6 ? "col-sat" : ""),
+        key===todayKey ? "today-col" : "",
+        hasComment ? "comment-cell" : ""
+      ].filter(Boolean).join(" ");
       if(rpEditMode){
         const disabled = (dow===0 || dow===6) ? "disabled" : "";
-        html += `<td class="${cls}">
+        const btnCls = `comment-btn${hasComment ? " has-comment" : ""}`;
+        html += `<td class="${classes}">
           <div class="plan-cell">
-            <div class="row-flex">
-              <input class="ovr-input" data-resp="${r}" data-date="${key}" type="number" min="0" value="${val}" ${disabled}>
-              <button type="button" class="comment-btn" data-resp="${r}" data-date="${key}" title="${esc(comment || 'Agregar comentario')}">💬</button>
-            </div>
-            ${commentPreview}
+            <input class="ovr-input" data-resp="${r}" data-date="${key}" type="number" min="0" value="${val}" ${disabled}>
+            <button type="button" class="${btnCls}" data-resp="${r}" data-date="${key}" aria-label="${esc(hasComment ? 'Editar comentario' : 'Agregar comentario')}"><span class="comment-icon">💬</span></button>
           </div>
         </td>`;
       }else{
-        html += `<td class="${cls}">
-          <div class="plan-cell readonly"><span>${val}</span></div>
-          ${commentPreview}
+        const btnHtml = hasComment ? `<button type="button" class="comment-btn has-comment" data-resp="${r}" data-date="${key}" aria-label="Ver comentario"><span class="comment-icon">💬</span></button>` : "";
+        html += `<td class="${classes}">
+          <div class="plan-cell readonly"><span class="value">${val}</span>${btnHtml}</div>
         </td>`;
       }
     });
@@ -988,18 +1183,21 @@ async function runReport(){
     html += `</tr>`;
 
     // Fila elaborado
-    html += `<tr>`;
-    html += `<td class="sticky l1"><b>${cap(r)}</b> — <span class="muted">Elaborado</span></td>`;
     let rowDone = 0;
+    html += `<tr class="done-row">`;
+    html += `<td class="sticky l2 type-cell">Elaborado</td>`;
     dMeta.forEach(({key,dow})=>{
       const n = doneCounts[r][key] || 0; rowDone += n;
-      const baseCls = (dow===0 ? "col-sun" : (dow===6 ? "col-sat" : ""));
-      const todayCls = (key===todayKey) ? "today-col" : "";
-      const cls = `${baseCls} ${todayCls}`.trim();
+      const hasComment = commentCols.has(key);
+      const classes = [
+        dow===0 ? "col-sun" : (dow===6 ? "col-sat" : ""),
+        key===todayKey ? "today-col" : "",
+        hasComment ? "comment-cell comment-linked" : ""
+      ].filter(Boolean).join(" ");
       if(n>0){
-        html += `<td class="${cls} clickable" onclick="openRpCell('${r}','${key}')"><b>${n}</b></td>`;
+        html += `<td class="${classes} clickable" onclick="openRpCell('${r}','${key}')"><b>${n}</b></td>`;
       }else{
-        html += `<td class="${cls} muted">0</td>`;
+        html += `<td class="${classes} muted">0</td>`;
       }
     });
     html += `<td><b>${rowDone}</b></td>`;
@@ -1008,7 +1206,9 @@ async function runReport(){
 
   rpTable.innerHTML = html;
 
-  // Guardado inline (y pinta rojo cuando es 0)
+  scrollReportToToday(todayIdx);
+
+  // Guardado inline
   rpTable.querySelectorAll(".ovr-input:not([disabled])").forEach(inp=>{
     inp.addEventListener("change", async (e)=>{
       const resp = e.target.getAttribute("data-resp");
@@ -1027,24 +1227,12 @@ async function runReport(){
 
   // Comentarios
   rpTable.querySelectorAll(".comment-btn").forEach(btn=>{
-    btn.addEventListener("click", async (e)=>{
-      const resp = e.currentTarget.getAttribute("data-resp");
-      const fecha = e.currentTarget.getAttribute("data-date");
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const resp = btn.getAttribute("data-resp");
+      const fecha = btn.getAttribute("data-date");
       const current = window._rp_planComments?.[resp]?.[fecha] || "";
-      const next = prompt(`Comentario para ${cap(resp)} — ${fecha}`, current);
-      if(next === null) return;
-      const trimmed = next.trim();
-      const payload = { coment: trimmed === "" ? null : next };
-      const curVal = window._rp_planCounts?.[resp]?.[fecha];
-      if(typeof curVal === "number") payload.valor = curVal;
-      try{
-        await savePlanEntry(resp, fecha, payload);
-        rpStatus.textContent = "Comentario guardado ✓";
-        await runReport();
-      }catch(err){
-        console.error(err);
-        rpStatus.textContent = "Error al guardar comentario";
-      }
+      openCommentPopover({ resp, fecha, anchor: btn, comment: current, editable: rpEditMode });
     });
   });
 
