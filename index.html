@@ -125,6 +125,7 @@
 
     .comment-cell{background:var(--comment-bg) !important; box-shadow:inset 0 0 0 1px rgba(250,204,21,.5);}
     .comment-cell.comment-linked{box-shadow:inset 0 0 0 1px rgba(250,204,21,.35);}
+    .comment-bajada{background:#e5e7eb !important; box-shadow:inset 0 0 0 1px rgba(148,163,184,.6);}
     .comment-btn{border:1px solid #cbd5e1;background:#fff;color:#475569;border-radius:999px;padding:2px 6px;font-size:12px;cursor:pointer;transition:all .15s;line-height:1;display:inline-flex;align-items:center;gap:4px}
     .comment-btn:hover{background:#eef2ff;border-color:#94a3b8;color:#1e293b}
     .comment-btn.has-comment{background:rgba(250,204,21,.18);border-color:rgba(250,204,21,.8);color:#92400e}
@@ -166,34 +167,6 @@
     .comment-popover .actions button{padding:6px 10px;border-radius:8px;border:1px solid #cbd5e1;background:#f8fafc;color:#1f2937;font-size:12px;cursor:pointer}
     .comment-popover .actions button.primary{background:#0ea5e9;border-color:#0284c7;color:#fff}
     .comment-popover .actions button.danger{background:#fee2e2;border-color:#fca5a5;color:#b91c1c}
-
-    /* Hoy */
-    :root{
-      --today-bg:#f5f3ff;
-      --today-ring:rgba(99,102,241,.45);
-      --today-wash:rgba(99,102,241,.18);
-    }
-    .today-col{
-      position:relative;
-      background:var(--today-bg) !important;
-      box-shadow:inset 0 0 0 9999px var(--today-wash);
-    }
-    .today-col::after{
-      content:"";
-      position:absolute;
-      inset:-2px;
-      border:2px solid var(--today-ring);
-      border-radius:8px;
-      pointer-events:none;
-    }
-
-    /* Comentarios en planificado */
-    .plan-cell{display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center}
-    .plan-cell > .row-flex{display:flex;gap:6px;align-items:center;justify-content:center}
-    .comment-btn{border:1px solid #cbd5e1;background:#fff;color:#475569;border-radius:8px;padding:4px 6px;font-size:12px;cursor:pointer;transition:all .15s}
-    .comment-btn:hover{background:#eef2ff;border-color:#94a3b8;color:#1e293b}
-    .comment-preview{font-size:11px;line-height:1.25;color:#475569;max-width:140px;max-height:48px;overflow:auto;padding:4px 6px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;word-break:break-word}
-    .plan-cell.readonly span{font-weight:600}
 
     #chartWrap{margin:12px 16px 16px;border:1px solid #eee;border-radius:10px;padding:10px;background:#fff}
     #rp_detail{margin:0 16px 16px;border:1px dashed #e5e7eb;border-radius:10px;padding:10px;background:#fafafa}
@@ -1146,22 +1119,24 @@ async function runReport(){
 
   resps.forEach(r=>{
     const respLabel = esc(cap(r));
-    const commentCols = new Set();
+    const commentCols = new Map();
 
     // Fila planificado
     let rowPlan = 0;
     html += `<tr class="plan-row">`;
-    html += `<td class="sticky l1" rowspan="2"><div class="resp-cell">${respLabel}</div></td>`;
+    html += `<td class="sticky l1"><div class="resp-cell">${respLabel}</div></td>`;
     html += `<td class="sticky l2 type-cell">Planificado</td>`;
     dMeta.forEach(({key,dow})=>{
       const val = planCounts[r][key] || 0; rowPlan += val;
       const comment = planComments[r][key] || "";
+      const trimmed = comment.trim().toLowerCase();
+      const isBajada = trimmed === "bajada";
       const hasComment = !!comment;
-      if(hasComment) commentCols.add(key);
+      if(hasComment) commentCols.set(key, { isBajada });
       const classes = [
         dow===0 ? "col-sun" : (dow===6 ? "col-sat" : ""),
         key===todayKey ? "today-col" : "",
-        hasComment ? "comment-cell" : ""
+        hasComment ? `comment-cell${isBajada ? " comment-bajada" : ""}` : ""
       ].filter(Boolean).join(" ");
       if(rpEditMode){
         const disabled = (dow===0 || dow===6) ? "disabled" : "";
@@ -1185,14 +1160,17 @@ async function runReport(){
     // Fila elaborado
     let rowDone = 0;
     html += `<tr class="done-row">`;
+    html += `<td class="sticky l1"><div class="resp-cell">${respLabel}</div></td>`;
     html += `<td class="sticky l2 type-cell">Elaborado</td>`;
     dMeta.forEach(({key,dow})=>{
       const n = doneCounts[r][key] || 0; rowDone += n;
-      const hasComment = commentCols.has(key);
+      const commentMeta = commentCols.get(key);
+      const hasComment = !!commentMeta;
+      const isBajada = commentMeta?.isBajada;
       const classes = [
         dow===0 ? "col-sun" : (dow===6 ? "col-sat" : ""),
         key===todayKey ? "today-col" : "",
-        hasComment ? "comment-cell comment-linked" : ""
+        hasComment ? `comment-cell comment-linked${isBajada ? " comment-bajada" : ""}` : ""
       ].filter(Boolean).join(" ");
       if(n>0){
         html += `<td class="${classes} clickable" onclick="openRpCell('${r}','${key}')"><b>${n}</b></td>`;
