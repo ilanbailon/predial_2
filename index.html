@@ -93,9 +93,19 @@
     .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid #e2e8f0;border-radius:999px;background:#fff;cursor:pointer;margin-right:6px;margin-bottom:6px}
     .chip input{transform:scale(1.1)}
     .chip.active{background:#eef7ff;border-color:#bfdbfe}
-    .kpi-line{display:flex;gap:10px;flex-wrap:wrap;margin:8px 16px}
-    .kpi{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:10px;min-width:160px}
-    .kpi .val{font-weight:800;font-size:20px}
+    #rp_kpiHeader{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin:8px 16px 16px}
+    .kpi-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px}
+    .kpi-card h4{margin:0;font-size:14px;color:#1e293b;font-weight:700}
+    .kpi-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    .kpi-metric{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:4px}
+    .kpi-metric .m-label{font-size:12px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+    .kpi-metric .m-val{font-size:24px;font-weight:800;color:#0f172a}
+    .kpi-metric small{color:#64748b;font-size:11px}
+    .kpi-leader-list{display:flex;flex-direction:column;gap:10px}
+    .leader-item{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc}
+    .leader-name{font-weight:600;color:#0f172a}
+    .leader-meta{display:flex;align-items:center;gap:8px;font-size:13px;color:#475569}
+    .leader-meta .badge{background:#e0f2fe;border:1px solid #bae6fd;border-radius:999px;padding:2px 10px;font-size:12px;color:#0c4a6e}
     table.report{border-collapse:collapse;width:calc(100% - 32px);margin:0 16px 12px}
     table.report th, table.report td{border:1px solid #e5e7eb;padding:6px 8px;text-align:center;vertical-align:top;background:#fff}
     th.sticky{position:sticky;z-index:3;background:#f6f6f6}
@@ -107,6 +117,34 @@
     .col-sat{ background:var(--sat) !important; }
     .col-sun{ background:var(--sun) !important; }
     .plan-zero{ background:var(--plan0) !important; }
+
+    /* Hoy */
+    :root{
+      --today-bg:#f5f3ff;
+      --today-ring:rgba(99,102,241,.45);
+      --today-wash:rgba(99,102,241,.18);
+    }
+    .today-col{
+      position:relative;
+      background:var(--today-bg) !important;
+      box-shadow:inset 0 0 0 9999px var(--today-wash);
+    }
+    .today-col::after{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      border:2px solid var(--today-ring);
+      border-radius:8px;
+      pointer-events:none;
+    }
+
+    /* Comentarios en planificado */
+    .plan-cell{display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center}
+    .plan-cell > .row-flex{display:flex;gap:6px;align-items:center;justify-content:center}
+    .comment-btn{border:1px solid #cbd5e1;background:#fff;color:#475569;border-radius:8px;padding:4px 6px;font-size:12px;cursor:pointer;transition:all .15s}
+    .comment-btn:hover{background:#eef2ff;border-color:#94a3b8;color:#1e293b}
+    .comment-preview{font-size:11px;line-height:1.25;color:#475569;max-width:140px;max-height:48px;overflow:auto;padding:4px 6px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;word-break:break-word}
+    .plan-cell.readonly span{font-weight:600}
 
     #chartWrap{margin:12px 16px 16px;border:1px solid #eee;border-radius:10px;padding:10px;background:#fff}
     #rp_detail{margin:0 16px 16px;border:1px dashed #e5e7eb;border-radius:10px;padding:10px;background:#fafafa}
@@ -279,9 +317,51 @@
 
     <div id="rp_chips" class="row" style="margin-top:-8px"></div>
 
-    <div class="kpi-line">
-      <div class="kpi"><div class="label">Total Elaborado (rango, por UNIR)</div><div id="kpi_total" class="val">—</div></div>
-      <div class="kpi"><div class="label">Responsables activos</div><div id="kpi_resps" class="val">—</div></div>
+    <div id="rp_kpiHeader">
+      <div class="kpi-card">
+        <h4>Resumen general</h4>
+        <div class="kpi-metrics">
+          <div class="kpi-metric">
+            <div class="m-label">Planificado</div>
+            <div class="m-val" id="kpiGeneralPlan">—</div>
+            <small id="kpiGeneralPlanRange">—</small>
+          </div>
+          <div class="kpi-metric">
+            <div class="m-label">Elaborado</div>
+            <div class="m-val" id="kpiGeneralDone">—</div>
+            <small id="kpiGeneralDoneRange">—</small>
+          </div>
+          <div class="kpi-metric">
+            <div class="m-label">Avance</div>
+            <div class="m-val" id="kpiGeneralPct">—</div>
+            <small>Elaborado / Planificado</small>
+          </div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <h4>Resumen acumulado hasta hoy</h4>
+        <div class="kpi-metrics">
+          <div class="kpi-metric">
+            <div class="m-label">Planificado acum.</div>
+            <div class="m-val" id="kpiTodayPlan">—</div>
+            <small id="kpiTodayRange">—</small>
+          </div>
+          <div class="kpi-metric">
+            <div class="m-label">Elaborado acum.</div>
+            <div class="m-val" id="kpiTodayDone">—</div>
+            <small>Hasta hoy</small>
+          </div>
+          <div class="kpi-metric">
+            <div class="m-label">Avance</div>
+            <div class="m-val" id="kpiTodayPct">—</div>
+            <small>Elaborado / Planificado</small>
+          </div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <h4>Avance por responsable (hasta hoy)</h4>
+        <div class="kpi-leader-list" id="kpiLeaderList"></div>
+      </div>
     </div>
 
     <div style="overflow:auto;border:1px solid #eee;border-radius:10px;margin:0 16px 12px">
@@ -300,6 +380,7 @@
 const SUPABASE_URL = "https://wbzxbfqowlfmmkwqeyam.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndienhiZnFvd2xmbW1rd3FleWFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5ODUwMDQsImV4cCI6MjA3MjU2MTAwNH0.mJJ7yID73tUerWE_aiNw3ZE4o-Q9YrT39YN-iS2CksA";
 const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const numberFormatter = new Intl.NumberFormat('es-PE');
 
 /** ====== Helpers de fecha (evitar desfase -05:00) ====== **/
 function parseYmd(ymd){ const [y,m,d] = ymd.split("-").map(Number); return new Date(y, (m||1)-1, d||1); } // Local
@@ -678,7 +759,7 @@ rpToggle.addEventListener("click", ()=>{ rpEditMode = !rpEditMode; rpToggle.text
 /* Por pedido: del 02 al 31 de octubre (año actual) */
 function defaultReportDates(){
   const Y = new Date().getFullYear();
-  rpStart.value = `${Y}-10-02`;
+  rpStart.value = `${Y}-09-02`;
   rpEnd.value   = `${Y}-10-31`;
 }
 
@@ -705,16 +786,24 @@ function selectedResp(){
 // Tabla 'plan_pred' (responsable, fecha, valor)
 async function fetchPlan(start, end){
   const { data, error } = await client.from("plan_pred")
-    .select("responsable,fecha,valor")
+    .select("responsable,fecha,valor,coment")
     .gte("fecha", start).lte("fecha", end);
   if(error){ console.warn("plan_pred:", error.message); return []; }
   return data||[];
 }
-async function savePlan(resp, fecha, valor){
-  // Guardar solo L-V
+async function savePlanEntry(resp, fecha, patch = {}){
   const dow = parseYmd(fecha).getDay(); // 0=Dom,6=Sab
-  if(dow===0 || dow===6) return; // ignorar finde
-  const payload = { responsable: resp, fecha, valor: Number(valor)||0 };
+  const hasValor = Object.prototype.hasOwnProperty.call(patch, "valor");
+  if(hasValor && (dow===0 || dow===6)) return; // valores solo L-V
+
+  const payload = { responsable: resp, fecha, ...patch };
+  if(!hasValor){
+    const current = window._rp_planCounts?.[resp]?.[fecha];
+    if(typeof current === "number") payload.valor = current;
+  }else{
+    payload.valor = Number(payload.valor)||0;
+  }
+
   const { error } = await client.from("plan_pred")
     .upsert(payload, { onConflict: "responsable,fecha" });
   if(error) throw error;
@@ -728,34 +817,32 @@ async function runReport(){
   rpStatus.textContent = "Cargando…";
   rpDetail.style.display = "none"; rpDetail.innerHTML = "";
 
-  // filas del rango (usamos responsables/fecha_elab comunes)
-  let { data, error } = await client
-    .from("cod_pred")
-    .select("unir,cod_prel,codigo_mtc,comunidad,responsable,fecha_elab")
-    .not("fecha_elab","is",null)
-    .gte("fecha_elab", start)
-    .lte("fecha_elab", end);
-  if(error){ rpStatus.textContent = "Error: "+error.message; return; }
+  const year = parseYmd(start).getFullYear();
+  const generalStart = `${year}-09-01`;
+  const generalEnd = `${year}-10-31`;
 
-  // Deduplicar por UNIR y armar lista de códigos por grupo
-  const groups = new Map(); // unir -> {responsable, fecha, comunidad, codigo_mtc, unirId, cods:[]}
-  (data||[]).forEach(r=>{
-    const resp = (r.responsable||"").toString().trim().toLowerCase();
-    if(allowed.size && !allowed.has(resp)) return;
-    const key = r.unir;
-    if(key == null) return;
-    if(!groups.has(key)){
-      groups.set(key, {
-        responsable: resp,
-        fecha: (r.fecha_elab||"").toString().slice(0,10),
-        comunidad: r.comunidad||"",
-        codigo_mtc: r.codigo_mtc||"",
-        unirId: key,
-        cods: []
-      });
-    }
-    groups.get(key).cods.push(r.cod_prel||"");
-  });
+  const [rangeResp, generalResp, planRows, planRowsGeneral] = await Promise.all([
+    client
+      .from("cod_pred")
+      .select("unir,cod_prel,codigo_mtc,comunidad,responsable,fecha_elab")
+      .not("fecha_elab","is",null)
+      .gte("fecha_elab", start)
+      .lte("fecha_elab", end),
+    client
+      .from("cod_pred")
+      .select("unir,cod_prel,codigo_mtc,comunidad,responsable,fecha_elab")
+      .not("fecha_elab","is",null)
+      .gte("fecha_elab", generalStart)
+      .lte("fecha_elab", generalEnd),
+    fetchPlan(start, end),
+    fetchPlan(generalStart, generalEnd)
+  ]);
+
+  if(rangeResp.error){ rpStatus.textContent = "Error: "+rangeResp.error.message; return; }
+  if(generalResp.error){ console.warn("cod_pred (general):", generalResp.error.message); }
+
+  const groups = buildGroupsMap(rangeResp.data||[], allowed);
+  const generalGroups = buildGroupsMap(generalResp.data||[], allowed);
 
   // Días del rango
   const dFrom = parseYmd(start), dTo = parseYmd(end);
@@ -767,8 +854,12 @@ async function runReport(){
   const resps = [...new Set([...groups.values()].map(g=>g.responsable))].filter(Boolean).sort();
 
   // Contadores: elaborado por día (por UNIR), plan desde plan_pred
-  const doneCounts = {}; const planCounts = {};
-  resps.forEach(r=>{ doneCounts[r] = Object.fromEntries(dKeys.map(k=>[k,0])); planCounts[r] = Object.fromEntries(dKeys.map(k=>[k,0])); });
+  const doneCounts = {}; const planCounts = {}; const planComments = {};
+  resps.forEach(r=>{
+    doneCounts[r] = Object.fromEntries(dKeys.map(k=>[k,0]));
+    planCounts[r] = Object.fromEntries(dKeys.map(k=>[k,0]));
+    planComments[r] = Object.fromEntries(dKeys.map(k=>[k,null]));
+  });
 
   // Mapa de celdas para detalle
   const cellMapDone = new Map(); // `${resp}|${day}` -> array de grupos {comunidad,codigo_mtc,unirId,cods[]}
@@ -783,24 +874,81 @@ async function runReport(){
   });
 
   // Traer planificado y volcar al mapa
-  const planRows = await fetchPlan(start, end);
   (planRows||[]).forEach(p=>{
-    const r = (p.responsable||"").toString().trim().toLowerCase();
+    const r = normResp(p.responsable);
     const k = (p.fecha||"").toString().slice(0,10);
-    if(resps.includes(r) && dKeys.includes(k)) planCounts[r][k] = Number(p.valor)||0;
+    if(resps.includes(r) && dKeys.includes(k)){
+      planCounts[r][k] = Number(p.valor)||0;
+      planComments[r][k] = p.coment || null;
+    }
   });
 
-  // KPIs
-  const totalDone = [...groups.values()].length;
-  document.getElementById("kpi_total").textContent = totalDone;
-  document.getElementById("kpi_resps").textContent = resps.length;
+  window._rp_planCounts = planCounts;
+  window._rp_planComments = planComments;
+
+  const todayKey = dateKey(new Date());
+
+  const planDaily = dMeta.map(({key}) => resps.reduce((acc,r)=> acc + (planCounts[r]?.[key]||0), 0));
+  const doneDaily = dMeta.map(({key}) => resps.reduce((acc,r)=> acc + (doneCounts[r]?.[key]||0), 0));
+
+  const todayIdxRaw = dKeys.indexOf(todayKey);
+  let todayIdx = todayIdxRaw;
+  if(todayIdx === -1){
+    todayIdx = -1;
+    dKeys.forEach((k,i)=>{ if(k<=todayKey) todayIdx = i; });
+  }
+
+  const planToToday = todayIdx >=0 ? planDaily.slice(0, todayIdx+1).reduce((acc,v)=>acc+v,0) : 0;
+  const doneToToday = todayIdx >=0 ? doneDaily.slice(0, todayIdx+1).reduce((acc,v)=>acc+v,0) : 0;
+  const todayPct = planToToday ? Math.round((doneToToday/planToToday)*100) : 0;
+
+  const cutoffKey = todayIdx >=0 ? dKeys[todayIdx] : (todayKey < start ? start : end);
+  let cutoffSuffix = '';
+  if(todayIdx === -1 && todayKey < start){ cutoffSuffix = ' (hoy antes del rango)'; }
+  else if(dKeys.length && todayIdx === dKeys.length-1 && todayKey > end){ cutoffSuffix = ' (hoy después del rango)'; }
+
+  const lastIdxForLeader = todayIdx >=0 ? todayIdx : (todayKey < start ? -1 : dMeta.length - 1);
+  const leaders = resps.map(r=>{
+    let planAcc = 0, doneAcc = 0;
+    if(lastIdxForLeader >= 0){
+      for(let i=0; i<=lastIdxForLeader; i++){
+        const key = dMeta[i].key;
+        planAcc += planCounts[r][key] || 0;
+        doneAcc += doneCounts[r][key] || 0;
+      }
+    }
+    const pct = planAcc ? Math.round((doneAcc/planAcc)*100) : (doneAcc>0 ? 100 : 0);
+    return { name: cap(r), plan: planAcc, done: doneAcc, pct };
+  }).sort((a,b)=> b.done - a.done);
+
+  const generalPlanTotal = (planRowsGeneral||[]).reduce((acc,p)=>{
+    const resp = normResp(p.responsable);
+    if(allowed.size && !allowed.has(resp)) return acc;
+    return acc + (Number(p.valor)||0);
+  }, 0);
+  const generalDoneTotal = generalGroups.size;
+  const generalPct = generalPlanTotal ? Math.round((generalDoneTotal/generalPlanTotal)*100) : 0;
+
+  renderHeaderKpis({
+    generalPlan: generalPlanTotal,
+    generalDone: generalDoneTotal,
+    generalPct,
+    generalRange: `${generalStart} → ${generalEnd}`,
+    todayPlan: planToToday,
+    todayDone: doneToToday,
+    todayPct,
+    todayRange: `${start} → ${cutoffKey}${cutoffSuffix}`,
+    leaders
+  });
 
   // Render tabla
   let html = "<tr>";
   html += `<th class="sticky l1">RESPONSABLE</th>`;
   dMeta.forEach(({key,dow})=>{
     const d = parseYmd(key);
-    const cls = dow===0 ? "col-sun" : (dow===6 ? "col-sat" : "");
+    const clsBase = dow===0 ? "col-sun" : (dow===6 ? "col-sat" : "");
+    const clsToday = key===todayKey ? "today-col" : "";
+    const cls = `${clsBase} ${clsToday}`.trim();
     html += `<th class="${cls}">${String(d.getDate()).padStart(2,'0')}<div class="muted">${["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][dow]}</div></th>`;
   });
   html += `<th>Total</th></tr>`;
@@ -812,16 +960,28 @@ async function runReport(){
     let rowPlan = 0;
     dMeta.forEach(({key,dow})=>{
       const val = planCounts[r][key] || 0; rowPlan += val;
+      const comment = planComments[r][key] || "";
       const baseCls = (dow===0 ? "col-sun" : (dow===6 ? "col-sat" : ""));
       const zeroCls = (val===0 && dow!==0 && dow!==6) ? "plan-zero" : "";
+      const todayCls = (key===todayKey) ? "today-col" : "";
+      const cls = `${baseCls} ${zeroCls} ${todayCls}`.trim();
+      const commentPreview = comment ? `<div class="comment-preview" title="${esc(comment)}">${esc(comment).replace(/\n/g,'<br>')}</div>` : "";
       if(rpEditMode){
-        if(dow===0 || dow===6){
-          html += `<td class="${baseCls}"><input class="ovr-input" type="number" min="0" value="${val}" disabled></td>`;
-        }else{
-          html += `<td class="${baseCls} ${zeroCls}"><input class="ovr-input" data-resp="${r}" data-date="${key}" type="number" min="0" value="${val}"></td>`;
-        }
+        const disabled = (dow===0 || dow===6) ? "disabled" : "";
+        html += `<td class="${cls}">
+          <div class="plan-cell">
+            <div class="row-flex">
+              <input class="ovr-input" data-resp="${r}" data-date="${key}" type="number" min="0" value="${val}" ${disabled}>
+              <button type="button" class="comment-btn" data-resp="${r}" data-date="${key}" title="${esc(comment || 'Agregar comentario')}">💬</button>
+            </div>
+            ${commentPreview}
+          </div>
+        </td>`;
       }else{
-        html += `<td class="${baseCls} ${zeroCls}">${val}</td>`;
+        html += `<td class="${cls}">
+          <div class="plan-cell readonly"><span>${val}</span></div>
+          ${commentPreview}
+        </td>`;
       }
     });
     html += `<td><b>${rowPlan}</b></td>`;
@@ -834,10 +994,12 @@ async function runReport(){
     dMeta.forEach(({key,dow})=>{
       const n = doneCounts[r][key] || 0; rowDone += n;
       const baseCls = (dow===0 ? "col-sun" : (dow===6 ? "col-sat" : ""));
+      const todayCls = (key===todayKey) ? "today-col" : "";
+      const cls = `${baseCls} ${todayCls}`.trim();
       if(n>0){
-        html += `<td class="${baseCls} clickable" onclick="openRpCell('${r}','${key}')"><b>${n}</b></td>`;
+        html += `<td class="${cls} clickable" onclick="openRpCell('${r}','${key}')"><b>${n}</b></td>`;
       }else{
-        html += `<td class="${baseCls} muted">0</td>`;
+        html += `<td class="${cls} muted">0</td>`;
       }
     });
     html += `<td><b>${rowDone}</b></td>`;
@@ -853,11 +1015,9 @@ async function runReport(){
       const fecha = e.target.getAttribute("data-date");
       const valor = Number(e.target.value)||0;
       try{
-        await savePlan(resp, fecha, valor);
-        // coloreo cero/no-cero
-        const td = e.target.closest("td");
-        if(td){ td.classList.toggle("plan-zero", valor===0); }
+        await savePlanEntry(resp, fecha, { valor });
         rpStatus.textContent = "Planificado guardado ✓";
+        await runReport();
       }catch(err){
         console.error(err);
         rpStatus.textContent = "Error al guardar planificado";
@@ -865,17 +1025,107 @@ async function runReport(){
     });
   });
 
-  // Gráfico de totales diarios (sin desfase)
+  // Comentarios
+  rpTable.querySelectorAll(".comment-btn").forEach(btn=>{
+    btn.addEventListener("click", async (e)=>{
+      const resp = e.currentTarget.getAttribute("data-resp");
+      const fecha = e.currentTarget.getAttribute("data-date");
+      const current = window._rp_planComments?.[resp]?.[fecha] || "";
+      const next = prompt(`Comentario para ${cap(resp)} — ${fecha}`, current);
+      if(next === null) return;
+      const trimmed = next.trim();
+      const payload = { coment: trimmed === "" ? null : next };
+      const curVal = window._rp_planCounts?.[resp]?.[fecha];
+      if(typeof curVal === "number") payload.valor = curVal;
+      try{
+        await savePlanEntry(resp, fecha, payload);
+        rpStatus.textContent = "Comentario guardado ✓";
+        await runReport();
+      }catch(err){
+        console.error(err);
+        rpStatus.textContent = "Error al guardar comentario";
+      }
+    });
+  });
+
+  // Gráfico curva S (acumulados)
   const labels = dMeta.map(({key})=>{
     const d = parseYmd(key); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
   });
-  const totals = dMeta.map(({key}) => resps.reduce((acc,r)=> acc + (doneCounts[r][key]||0), 0));
-  renderReportChart(labels, totals);
+  const planCum = [];
+  planDaily.reduce((acc,v)=>{ const next=acc+v; planCum.push(next); return next; },0);
+
+  const doneCum = [];
+  doneDaily.reduce((acc,v,idx)=>{
+    if(todayIdx>=0 && idx>todayIdx){ doneCum.push(null); return acc; }
+    const next = acc+v; doneCum.push(next); return next;
+  },0);
+
+  renderReportCurve(labels, planCum, doneCum, todayIdx);
 
   // Exponer mapa para detalle
   window._rp_cellMapDone = cellMapDone;
 
   rpStatus.textContent = "Listo.";
+}
+
+function buildGroupsMap(rows, allowed = new Set()){
+  const map = new Map();
+  (rows||[]).forEach(r=>{
+    const resp = normResp(r?.responsable);
+    if(!resp) return;
+    if(allowed.size && !allowed.has(resp)) return;
+    const key = r?.unir;
+    if(key == null) return;
+    if(!map.has(key)){
+      map.set(key, {
+        responsable: resp,
+        fecha: (r.fecha_elab||"").toString().slice(0,10),
+        comunidad: r.comunidad || "",
+        codigo_mtc: r.codigo_mtc || "",
+        unirId: key,
+        cods: []
+      });
+    }
+    map.get(key).cods.push(r.cod_prel || "");
+  });
+  return map;
+}
+
+function renderHeaderKpis({ generalPlan, generalDone, generalPct, generalRange, todayPlan, todayDone, todayPct, todayRange, leaders }){
+  const fmt = (n) => numberFormatter.format(Math.round(n || 0));
+  const setText = (id, val) => {
+    const el = document.getElementById(id);
+    if(el) el.textContent = val;
+  };
+
+  setText('kpiGeneralPlan', fmt(generalPlan));
+  setText('kpiGeneralDone', fmt(generalDone));
+  setText('kpiGeneralPct', `${Math.round(generalPct||0)}%`);
+  setText('kpiGeneralPlanRange', generalRange);
+  setText('kpiGeneralDoneRange', generalRange);
+
+  setText('kpiTodayPlan', fmt(todayPlan));
+  setText('kpiTodayDone', fmt(todayDone));
+  setText('kpiTodayPct', `${Math.round(todayPct||0)}%`);
+  setText('kpiTodayRange', todayRange);
+
+  const listEl = document.getElementById('kpiLeaderList');
+  if(!listEl) return;
+  if(!leaders || leaders.length === 0){
+    listEl.innerHTML = '<div class="muted">Sin responsables en el rango.</div>';
+    return;
+  }
+
+  listEl.innerHTML = leaders.map(l => `
+    <div class="leader-item">
+      <span class="leader-name">${esc(l.name)}</span>
+      <span class="leader-meta">
+        <span class="badge">${fmt(l.done)}${l.plan>0 ? ' / ' + fmt(l.plan) : ''}</span>
+        <span>${Math.round(l.pct||0)}%</span>
+      </span>
+    </div>
+  `).join('');
 }
 
 // Detalle de una celda (lista de grupos UNIR con sus códigos clicables)
@@ -922,22 +1172,82 @@ async function selectFromReport(unir, cod){
   }
 }
 
-function renderReportChart(labels, totals){
+const TodayLinePlugin = {
+  id:'todayLine',
+  afterDatasetsDraw(chart, args, opts){
+    const idx = opts?.index;
+    if(idx == null || idx < 0) return;
+    const {ctx, chartArea, scales} = chart;
+    if(!chartArea || !scales?.x) return;
+    const x = scales.x.getPixelForValue(idx);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(99,102,241,.6)';
+    ctx.setLineDash([4,4]);
+    ctx.beginPath();
+    ctx.moveTo(x, chartArea.top);
+    ctx.lineTo(x, chartArea.bottom);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#312e81';
+    ctx.font = '12px system-ui, sans-serif';
+    ctx.fillText('Hoy', x + 6, chartArea.top + 14);
+    ctx.restore();
+  }
+};
+let todayPluginRegistered = false;
+
+function renderReportCurve(labels, planCum, doneCum, todayIdx){
   document.getElementById("chartWrap").style.display = "block";
   const ctx = document.getElementById("rp_chart").getContext("2d");
   if(rpChart) rpChart.destroy();
+  if(!todayPluginRegistered){ Chart.register(TodayLinePlugin); todayPluginRegistered = true; }
   rpChart = new Chart(ctx, {
-    type: 'bar',
+    type: 'line',
     data: {
       labels,
-      datasets: [{ label: 'Elaborados por día (UNIR)', data: totals }]
+      datasets: [
+        {
+          label: 'Planificado acumulado',
+          data: planCum,
+          tension: 0.3,
+          borderColor: '#0ea5e9',
+          backgroundColor: 'rgba(14,165,233,.12)',
+          fill: false,
+          pointRadius: 3
+        },
+        {
+          label: 'Elaborado acumulado',
+          data: doneCum,
+          tension: 0.3,
+          borderColor: '#22c55e',
+          backgroundColor: 'rgba(34,197,94,.12)',
+          fill: false,
+          pointRadius: 3,
+          spanGaps: true
+        }
+      ]
     },
-    options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } }
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: { enabled: true },
+        todayLine: { index: todayIdx }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { precision: 0 }
+        }
+      }
+    }
   });
 }
 
 function esc(s){ return (s??"").toString().replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
 function cap(r){ return (r||"").replace(/\b\w/g,m=>m.toUpperCase()); }
+function normResp(v){ return (v??"").toString().trim().toLowerCase(); }
 
 /** ====== RESIZER ====== **/
 (function initGutter(){
