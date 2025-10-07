@@ -1183,7 +1183,8 @@ async function runReport(){
 
   rpTable.innerHTML = html;
 
-  scrollReportToToday(todayIdx);
+  // Mantener fija la columna de responsables: no centrar automáticamente en la columna de hoy
+  // scrollReportToToday(todayIdx);
 
   // Guardado inline
   rpTable.querySelectorAll(".ovr-input:not([disabled])").forEach(inp=>{
