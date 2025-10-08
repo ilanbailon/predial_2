@@ -19,6 +19,7 @@
       --panel-bg:#f8fafc; --card:#ffffff; --line:#e2e8f0;
       --predio:#0ea5e9; --comunidad:#22c55e; --otros:#a855f7; --highlight:#e11d48;
       --text:#0f172a;
+      --resp-col-width:220px; --type-col-width:130px;
 
       --sat:#e0f2ff;   /* sábado (azul muy claro)   */
       --sun:#fee2e2;   /* domingo (rojito)          */
@@ -103,18 +104,37 @@
     .kpi-metric .m-val{font-size:24px;font-weight:800;color:#0f172a}
     .kpi-metric small{color:#64748b;font-size:11px}
     .kpi-leader-list{display:flex;flex-direction:column;gap:10px}
-    .leader-item{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc}
-    .leader-name{font-weight:600;color:#0f172a}
-    .leader-meta{display:flex;align-items:center;gap:8px;font-size:13px;color:#475569}
+    .leader-item{display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc}
+    .leader-head{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:#0f172a;font-weight:600}
+    .leader-head span:last-child{font-weight:700}
+    .leader-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:#475569;align-items:center}
     .leader-meta .badge{background:#e0f2fe;border:1px solid #bae6fd;border-radius:999px;padding:2px 10px;font-size:12px;color:#0c4a6e}
+    .leader-progress{width:100%;height:8px;background:#e2e8f0;border-radius:999px;overflow:hidden}
+    .leader-progress span{display:block;height:100%;background:#0ea5e9;border-radius:999px 0 0 999px}
     table.report{border-collapse:collapse;width:auto;min-width:100%;margin:0}
     table.report th, table.report td{border:1px solid #e5e7eb;padding:6px 8px;text-align:center;vertical-align:top;background:#fff;position:relative}
     th.sticky{position:sticky;z-index:3;background:#f6f6f6}
     td.sticky{position:sticky;z-index:2;background:#fff}
-    th.sticky.l1, td.sticky.l1 { left:0; min-width:220px; text-align:left; background:#fff; z-index:4;}
-    th.sticky.l2, td.sticky.l2 { left:220px; min-width:130px; text-align:left; background:#fff; z-index:3;}
+    th.sticky.l1, td.sticky.l1 {
+      left:0;
+      min-width:var(--resp-col-width);
+      width:var(--resp-col-width);
+      text-align:left;
+      background:#fff;
+      z-index:5;
+      box-shadow:2px 0 0 rgba(15,23,42,.05);
+    }
+    th.sticky.l2, td.sticky.l2 {
+      left:var(--resp-col-width);
+      min-width:var(--type-col-width);
+      width:var(--type-col-width);
+      text-align:left;
+      background:#fff;
+      z-index:4;
+      box-shadow:1px 0 0 rgba(15,23,42,.04);
+    }
     .type-cell{font-weight:600;color:#475569}
-    .resp-cell{font-weight:700;font-size:15px;text-transform:capitalize;padding-right:12px}
+    .resp-cell{font-weight:700;font-size:15px;text-transform:capitalize;padding:0 12px}
     .ovr-input{width:62px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:8px;text-align:center}
     #rp_tableWrap{overflow:auto;border:1px solid #eee;border-radius:10px;margin:0 16px 12px;background:#fff;position:relative}
 
@@ -126,14 +146,27 @@
     .comment-cell{background:var(--comment-bg) !important; box-shadow:inset 0 0 0 1px rgba(250,204,21,.5);}
     .comment-cell.comment-linked{box-shadow:inset 0 0 0 1px rgba(250,204,21,.35);}
     .comment-bajada{background:#e5e7eb !important; box-shadow:inset 0 0 0 1px rgba(148,163,184,.6);}
-    .comment-btn{border:1px solid #cbd5e1;background:#fff;color:#475569;border-radius:999px;padding:2px 6px;font-size:12px;cursor:pointer;transition:all .15s;line-height:1;display:inline-flex;align-items:center;gap:4px}
-    .comment-btn:hover{background:#eef2ff;border-color:#94a3b8;color:#1e293b}
-    .comment-btn.has-comment{background:rgba(250,204,21,.18);border-color:rgba(250,204,21,.8);color:#92400e}
-    .comment-icon{font-size:13px;line-height:1}
-    .plan-cell{display:flex;align-items:center;justify-content:center;gap:6px}
+    .plan-cell{position:relative;display:flex;align-items:center;justify-content:center;gap:6px;padding-right:18px}
     .plan-cell.readonly{justify-content:flex-start}
     .plan-cell.readonly span{font-weight:600}
     .plan-cell.readonly .value{min-width:24px;text-align:center}
+    .comment-pin{
+      position:absolute;top:4px;right:4px;
+      width:18px;height:18px;
+      border-radius:999px;
+      border:1px solid transparent;
+      background:rgba(148,163,184,.12);
+      color:#475569;
+      font-size:11px;line-height:1;
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;transition:transform .15s,background .15s,border-color .15s,color .15s;
+      padding:0;
+    }
+    .comment-pin::before{content:"💬";transform:scale(.84);}
+    .comment-pin:hover{transform:scale(1.08);}
+    .comment-pin.empty{background:transparent;color:#94a3b8;}
+    .comment-pin.has-comment{background:rgba(250,204,21,.24);border-color:rgba(250,204,21,.7);color:#92400e;}
+    .comment-pin.bajada{background:#d1d5db;border-color:#94a3b8;color:#334155;}
 
     /* Hoy */
     :root{
@@ -1138,19 +1171,29 @@ async function runReport(){
         key===todayKey ? "today-col" : "",
         hasComment ? `comment-cell${isBajada ? " comment-bajada" : ""}` : ""
       ].filter(Boolean).join(" ");
+      const showPin = rpEditMode || hasComment;
+      const pinClasses = ["comment-pin"];
+      if(hasComment) pinClasses.push("has-comment");
+      else if(rpEditMode) pinClasses.push("empty");
+      if(isBajada) pinClasses.push("bajada");
+      const ariaLabel = hasComment
+        ? (rpEditMode ? "Editar comentario" : "Ver comentario")
+        : "Agregar comentario";
+      const pinHtml = showPin
+        ? `<button type="button" class="${pinClasses.join(" ")}" data-resp="${r}" data-date="${key}" aria-label="${esc(ariaLabel)}"></button>`
+        : "";
+
       if(rpEditMode){
         const disabled = (dow===0 || dow===6) ? "disabled" : "";
-        const btnCls = `comment-btn${hasComment ? " has-comment" : ""}`;
         html += `<td class="${classes}">
           <div class="plan-cell">
             <input class="ovr-input" data-resp="${r}" data-date="${key}" type="number" min="0" value="${val}" ${disabled}>
-            <button type="button" class="${btnCls}" data-resp="${r}" data-date="${key}" aria-label="${esc(hasComment ? 'Editar comentario' : 'Agregar comentario')}"><span class="comment-icon">💬</span></button>
+            ${pinHtml}
           </div>
         </td>`;
       }else{
-        const btnHtml = hasComment ? `<button type="button" class="comment-btn has-comment" data-resp="${r}" data-date="${key}" aria-label="Ver comentario"><span class="comment-icon">💬</span></button>` : "";
         html += `<td class="${classes}">
-          <div class="plan-cell readonly"><span class="value">${val}</span>${btnHtml}</div>
+          <div class="plan-cell readonly"><span class="value">${val}</span>${pinHtml}</div>
         </td>`;
       }
     });
@@ -1204,7 +1247,7 @@ async function runReport(){
   });
 
   // Comentarios
-  rpTable.querySelectorAll(".comment-btn").forEach(btn=>{
+  rpTable.querySelectorAll(".comment-pin").forEach(btn=>{
     btn.addEventListener("click", (e)=>{
       e.stopPropagation();
       const resp = btn.getAttribute("data-resp");
@@ -1283,15 +1326,28 @@ function renderHeaderKpis({ generalPlan, generalDone, generalPct, generalRange, 
     return;
   }
 
-  listEl.innerHTML = leaders.map(l => `
-    <div class="leader-item">
-      <span class="leader-name">${esc(l.name)}</span>
-      <span class="leader-meta">
-        <span class="badge">${fmt(l.done)}${l.plan>0 ? ' / ' + fmt(l.plan) : ''}</span>
-        <span>${Math.round(l.pct||0)}%</span>
-      </span>
-    </div>
-  `).join('');
+  listEl.innerHTML = leaders.map(l => {
+    const pct = Math.round(l.pct || 0);
+    const barPct = Math.max(0, Math.min(100, pct));
+    const doneLabel = fmt(l.done);
+    const planLabel = l.plan > 0 ? fmt(l.plan) : null;
+    const badgeText = planLabel ? `${doneLabel} / ${planLabel}` : `${doneLabel}`;
+    const planCaption = planLabel ? 'Elaborados / planificados' : 'Elaborados';
+    const planText = planLabel ? `${planLabel} planificados` : 'Sin plan definido';
+    return `
+      <div class="leader-item">
+        <div class="leader-head">
+          <span>${esc(l.name)}</span>
+          <span>${pct}%</span>
+        </div>
+        <div class="leader-meta">
+          <span class="badge" title="${esc(planCaption)}">${esc(badgeText)}</span>
+          <span>${esc(planText)}</span>
+        </div>
+        <div class="leader-progress"><span style="width:${barPct}%"></span></div>
+      </div>
+    `;
+  }).join('');
 }
 
 // Detalle de una celda (lista de grupos UNIR con sus códigos clicables)
