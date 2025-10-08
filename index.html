@@ -158,6 +158,19 @@
     .today-col::after{ content:""; position:absolute; inset:-2px; border:2px solid var(--today-ring); border-radius:8px; pointer-events:none; }
 
     .comment-preview{display:none}
+
+    /* ===== Global loader ===== */
+    #globalLoader{
+      position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:12px;background:rgba(15,23,42,.85);color:#fff;z-index:9000;font-size:16px;letter-spacing:.3px;
+      transition:opacity .25s ease, visibility .25s ease;opacity:1;visibility:visible;
+    }
+    #globalLoader.hidden{opacity:0;visibility:hidden;}
+    .loader-spinner{
+      width:54px;height:54px;border-radius:50%;border:4px solid rgba(255,255,255,.25);
+      border-top-color:#0ea5e9;animation:spin 1s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg);}}
     .comment-popover{position:absolute;min-width:240px;max-width:280px;background:#fff;border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 18px 40px rgba(15,23,42,.2);padding:12px;z-index:9000;display:none}
     .comment-popover.open{display:block}
     .comment-popover h5{margin:0 0 6px;font-size:13px;color:#334155;font-weight:700}
@@ -180,6 +193,8 @@
     #expModal .modal{ width:min(1100px,95vw); }
     #exp_table_wrap{ margin-top:8px; border:1px solid #eee; border-radius:10px; background:#fff; max-height:62vh; overflow:auto; }
     #exp_table td{ text-align:left; }
+    #exp_table .cod-badges{ display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-start; }
+    #exp_table .cod-badges .badge{ display:inline-flex; align-items:center; justify-content:center; padding:4px 8px; border-radius:999px; border:1px solid #cbd5e1; background:#eef2ff; font-size:12px; color:#1e293b; white-space:nowrap; }
     #exp_counter{ margin-left:auto; font-size:12px; color:#475569; }
 
     /* Animación flash */
@@ -226,6 +241,10 @@
   </style>
 </head>
 <body>
+  <div id="globalLoader" role="status" aria-live="polite">
+    <div class="loader-spinner" aria-hidden="true"></div>
+    <div>Cargando capas…</div>
+  </div>
   <header>
     <div class="title">Geoportal Predial</div>
 
@@ -455,11 +474,11 @@
       <table id="rp_table" class="report"></table>
     </div>
 
+    <div id="rp_detail" style="display:none"></div>
+
     <div id="chartWrap" style="display:none">
       <canvas id="rp_chart" height="336"></canvas>
     </div>
-
-    <div id="rp_detail" style="display:none"></div>
   </aside>
 
   <div id="commentPopover" class="comment-popover" role="dialog" aria-modal="false"></div>
@@ -470,6 +489,12 @@ const SUPABASE_URL = "https://wbzxbfqowlfmmkwqeyam.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndienhiZnFvd2xmbW1rd3FleWFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5ODUwMDQsImV4cCI6MjA3MjU2MTAwNH0.mJJ7yID73tUerWE_aiNw3ZE4o-Q9YrT39YN-iS2CksA";
 const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const numberFormatter = new Intl.NumberFormat('es-PE');
+let globalLoaderEl = document.getElementById('globalLoader');
+function hideGlobalLoader(){
+  if(!globalLoaderEl) return;
+  globalLoaderEl.classList.add('hidden');
+  setTimeout(()=>{ globalLoaderEl?.remove?.(); globalLoaderEl = null; }, 350);
+}
 
 /** ====== Helpers fecha ====== **/
 function parseYmd(ymd){ const [y,m,d] = ymd.split("-").map(Number); return new Date(y, (m||1)-1, d||1); }
@@ -502,27 +527,31 @@ function styleByTipo(t){ return isComunidad(t) ? commStyle : isPredios(t) ? norm
 
 /** ====== DATA LOAD ====== **/
 async function loadAllPredios(){
-  const { data, error } = await client
-    .from("cod_pred")
-    .select("cod_prel,unir,comunidad,condicion,grupo,codigo_mtc,titular,tipo,geom");
-  if(error){ console.error(error); return; }
+  try{
+    const { data, error } = await client
+      .from("cod_pred")
+      .select("cod_prel,unir,comunidad,condicion,grupo,codigo_mtc,titular,tipo,geom");
+    if(error){ console.error(error); return; }
 
-  capaPredio.clearLayers(); capaComunidad.clearLayers(); capaOtros.clearLayers();
+    capaPredio.clearLayers(); capaComunidad.clearLayers(); capaOtros.clearLayers();
 
-  (data||[]).forEach(p=>{
-    if(!p.geom) return;
-    const f = { type:"Feature", geometry:p.geom, properties:p };
-    const layer = L.geoJSON(f, { style: styleByTipo(p.tipo) });
-    layer.on("click", () => { selectedCodPrel = p.cod_prel; showGroup(p.unir); });
-    if(isComunidad(p.tipo)) layer.addTo(capaComunidad);
-    else if(isPredios(p.tipo)) layer.addTo(capaPredio);
-    else layer.addTo(capaOtros);
-  });
+    (data||[]).forEach(p=>{
+      if(!p.geom) return;
+      const f = { type:"Feature", geometry:p.geom, properties:p };
+      const layer = L.geoJSON(f, { style: styleByTipo(p.tipo) });
+      layer.on("click", () => { selectedCodPrel = p.cod_prel; showGroup(p.unir); });
+      if(isComunidad(p.tipo)) layer.addTo(capaComunidad);
+      else if(isPredios(p.tipo)) layer.addTo(capaPredio);
+      else layer.addTo(capaOtros);
+    });
 
-  const bounds = capaPredio.getLayers().length ? capaPredio.getBounds()
-               : capaComunidad.getLayers().length ? capaComunidad.getBounds()
-               : capaOtros.getLayers().length ? capaOtros.getBounds() : null;
-  if(bounds) map.fitBounds(bounds);
+    const bounds = capaPredio.getLayers().length ? capaPredio.getBounds()
+                 : capaComunidad.getLayers().length ? capaComunidad.getBounds()
+                 : capaOtros.getLayers().length ? capaOtros.getBounds() : null;
+    if(bounds) map.fitBounds(bounds);
+  }finally{
+    hideGlobalLoader();
+  }
 }
 
 /** ====== DESTACAR GRUPO ====== **/
@@ -835,9 +864,16 @@ function closeExpModal(){ expModalBack.style.display = 'none'; }
 
 function defaultExpDates(){
   const today = new Date();
-  const start = new Date(today.getFullYear(), today.getMonth(), 1);
+  let year = today.getFullYear();
+  const start = new Date(year, 8, 1);
+  let end = new Date(year, 9, 25);
+  if(today < start){
+    year -= 1;
+    start.setFullYear(year);
+    end = new Date(year, 9, 25);
+  }
   expStart.value = ymdFromDateLocal(start);
-  expEnd.value   = ymdFromDateLocal(today);
+  expEnd.value   = ymdFromDateLocal(end);
 }
 function hydrateExpSelects(){
   // Responsables
@@ -862,39 +898,47 @@ async function runExpedientes(){
   const { data, error } = await q.order('fecha_elab', { ascending:true });
   if(error){ console.error(error.message); alert('Error consultando expedientes'); return; }
 
-  // Agrupar por UNIR (o por cod_prel si no tiene unir)
+  // Agrupar por Código MTC (o cod_prel cuando no exista)
   const map = new Map();
   (data||[]).forEach(row=>{
-    const key = (row.unir==null ? `single:${row.cod_prel}` : `unir:${row.unir}`);
+    const mtc = (row.codigo_mtc || "").trim();
+    const cod = row.cod_prel || "";
+    const key = mtc !== "" ? `mtc:${mtc}` : (row.unir != null ? `unir:${row.unir}` : `prel:${cod}`);
     if(!map.has(key)){
       map.set(key, {
         unir: row.unir,
-        responsable: normResp(row.responsable),
-        grupo: row.grupo || "",
         comunidad: row.comunidad || "",
-        mtc: row.codigo_mtc || "",
+        mtc,
         titular: row.titular || "",
-        fecha: (row.fecha_elab||"").toString().slice(0,10),
-        cods: []
+        cods: [],
+        primaryCod: cod
       });
     }
-    map.get(key).cods.push(row.cod_prel);
+    const bucket = map.get(key);
+    if(row.unir != null && bucket.unir == null) bucket.unir = row.unir;
+    if(row.comunidad && !bucket.comunidad) bucket.comunidad = row.comunidad;
+    if(row.titular && !bucket.titular) bucket.titular = row.titular;
+    if(cod && !bucket.cods.includes(cod)) bucket.cods.push(cod);
+    if(!bucket.primaryCod && cod) bucket.primaryCod = cod;
   });
 
-  const items = [...map.values()].sort((a,b)=> (a.fecha||"").localeCompare(b.fecha||"") || (a.comunidad||"").localeCompare(b.comunidad||""));
+  const items = [...map.values()].map(item=>({
+    ...item,
+    cods: item.cods.sort((a,b)=> a.localeCompare(b))
+  })).sort((a,b)=>{
+    const c = (a.comunidad||"").localeCompare(b.comunidad||"");
+    if(c !== 0) return c;
+    return (a.mtc||"").localeCompare(b.mtc||"");
+  });
 
   expCounter.textContent = `${items.length} ${items.length===1?'expediente':'expedientes'}`;
 
   let html = `
     <thead>
       <tr>
-        <th>Fecha</th>
-        <th>Responsable</th>
-        <th>Grupo</th>
         <th>Comunidad</th>
         <th>Código MTC</th>
         <th>cod_prel</th>
-        <th>Unidos</th>
         <th>Titular</th>
         <th>Acción</th>
       </tr>
@@ -902,23 +946,21 @@ async function runExpedientes(){
     <tbody>
   `;
   html += items.map(it=>{
-    const unidos = it.cods.length > 1 ? `Sí (${it.cods.length})` : "No";
-    const codList = it.cods.map(c=>`<span class="badge" style="background:#eef2ff">${esc(c)}</span>`).join(' ');
-    const firstCod = it.cods[0] || "";
+    const codList = it.cods.length ? it.cods.map(c=>`<span class="badge">${esc(c)}</span>`).join('') : '<span class="muted">—</span>';
+    const firstCod = it.primaryCod || it.cods[0] || "";
     return `
       <tr>
-        <td>${esc(it.fecha)}</td>
-        <td>${esc(cap(it.responsable||""))}</td>
-        <td>${esc(it.grupo||"")}</td>
         <td>${esc(it.comunidad||"")}</td>
         <td>${esc(it.mtc||"")}</td>
-        <td style="white-space:nowrap">${codList}</td>
-        <td>${unidos}</td>
+        <td><div class="cod-badges">${codList}</div></td>
         <td>${esc(it.titular||"")}</td>
         <td><button class="btn-small btn-focus-exp" data-unir="${it.unir??''}" data-cod="${firstCod}">Enfocar</button></td>
       </tr>
     `;
   }).join('');
+  if(items.length === 0){
+    html += `<tr><td colspan="5" class="muted" style="text-align:center;padding:20px 0">Sin expedientes</td></tr>`;
+  }
   html += `</tbody>`;
   expTable.innerHTML = html;
 
@@ -966,6 +1008,7 @@ const rpTable  = document.getElementById("rp_table");
 const rpTableWrap = document.getElementById("rp_tableWrap");
 const rpDetail = document.getElementById("rp_detail");
 const rpToggle = document.getElementById("rp_toggleEdit");
+const EDIT_PLAN_PASSWORD = "assa$2025";
 let rpChart = null;
 let rpEditMode = false;
 const commentPopoverEl = document.getElementById("commentPopover");
@@ -986,7 +1029,19 @@ function closeReport(){
   closeCommentPopover();
 }
 rpRun.addEventListener("click", runReport);
-rpToggle.addEventListener("click", ()=>{ rpEditMode = !rpEditMode; rpToggle.textContent = rpEditMode ? "✅ Terminar edición" : "✏️ Editar Planificado"; runReport(); });
+rpToggle.addEventListener("click", ()=>{
+  if(!rpEditMode){
+    const input = prompt("Ingresa la contraseña para editar el planificado:");
+    if(input === null) return;
+    if(input !== EDIT_PLAN_PASSWORD){
+      alert("Contraseña incorrecta");
+      return;
+    }
+  }
+  rpEditMode = !rpEditMode;
+  rpToggle.textContent = rpEditMode ? "✅ Terminar edición" : "✏️ Editar Planificado";
+  runReport();
+});
 
 function defaultReportDates(){
   const Y = new Date().getFullYear();
