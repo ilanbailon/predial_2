@@ -21,9 +21,9 @@
       --text:#0f172a;
       --resp-col-width:220px; --type-col-width:130px;
 
-      --sat:#e0f2ff;   /* sábado (azul muy claro)   */
-      --sun:#fee2e2;   /* domingo (rojito)          */
-      --comment-bg:#fef9c3; /* comentario */
+      --sat:#e0f2ff;
+      --sun:#fee2e2;
+      --comment-bg:#fef9c3;
       --comment-ring:#facc15;
     }
     *{box-sizing:border-box}
@@ -71,15 +71,15 @@
     .label{font-weight:700;margin-bottom:4px}
     .textblock{white-space:pre-line;background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px;color:var(--text)}
     .area-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;margin:10px 0; transition: box-shadow .2s, background .2s}
-    .area-card h4{margin:0 0 6px;color:var(--accent)}
+    .area-card h4{margin:0 0 6px;color:#0ea5e9}
     .area-actions{display:flex;gap:8px;flex-wrap:wrap}
     .pill{padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer}
     .pill:hover{border-color:var(--accent)}
     .muted{color:#64748b;font-size:12px}
-    .badge{background:#eef2ff;border:1px solid var(--line);border-radius:999px;padding:4px 8px;font-size:12px;color:var(--text)}
-    input,textarea{width:100%;padding:6px;border:1px solid var(--line);border-radius:8px;color:var(--text)}
+    .badge{background:#eef2ff;border:1px solid var(--line);border-radius:999px;padding:4px 8px;font-size:12px;color:#0f172a}
+    input,textarea{width:100%;padding:6px;border:1px solid var(--line);border-radius:8px;color:#0f172a}
     .btn-small{padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer}
-    .btn-small:hover{border-color:var(--accent)}
+    .btn-small:hover{border-color:#0ea5e9}
     td.clickable{cursor:pointer;text-decoration:underline}
 
     /* ===== Drawer Reporte ===== */
@@ -92,6 +92,7 @@
     .drawer.open{ transform:translateX(0); }
     .drawer-head{display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;border-bottom:1px solid #e5e7eb;padding:12px 16px;z-index:1}
     .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 16px}
+
     .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid #e2e8f0;border-radius:999px;background:#fff;cursor:pointer;margin-right:6px;margin-bottom:6px}
     .chip input{transform:scale(1.1)}
     .chip.active{background:#eef7ff;border-color:#bfdbfe}
@@ -104,6 +105,7 @@
     .kpi-metric .m-val{font-size:24px;font-weight:800;color:#0f172a}
     .kpi-metric small{color:#64748b;font-size:11px}
     .kpi-leader-list{display:flex;flex-direction:column;gap:10px}
+
     .leader-item{display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc}
     .leader-head{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:#0f172a;font-weight:600}
     .leader-head span:last-child{font-weight:700}
@@ -111,34 +113,24 @@
     .leader-meta .badge{background:#e0f2fe;border:1px solid #bae6fd;border-radius:999px;padding:2px 10px;font-size:12px;color:#0c4a6e}
     .leader-progress{width:100%;height:8px;background:#e2e8f0;border-radius:999px;overflow:hidden}
     .leader-progress span{display:block;height:100%;background:#0ea5e9;border-radius:999px 0 0 999px}
+
     table.report{border-collapse:collapse;width:auto;min-width:100%;margin:0}
     table.report th, table.report td{border:1px solid #e5e7eb;padding:6px 8px;text-align:center;vertical-align:top;background:#fff;position:relative}
     th.sticky{position:sticky;z-index:3;background:#f6f6f6}
     td.sticky{position:sticky;z-index:2;background:#fff}
     th.sticky.l1, td.sticky.l1 {
-      left:0;
-      min-width:var(--resp-col-width);
-      width:var(--resp-col-width);
-      text-align:left;
-      background:#fff;
-      z-index:5;
-      box-shadow:2px 0 0 rgba(15,23,42,.05);
+      left:0; min-width:var(--resp-col-width); width:var(--resp-col-width);
+      text-align:left; background:#fff; z-index:5; box-shadow:2px 0 0 rgba(15,23,42,.05);
     }
     th.sticky.l2, td.sticky.l2 {
-      left:var(--resp-col-width);
-      min-width:var(--type-col-width);
-      width:var(--type-col-width);
-      text-align:left;
-      background:#fff;
-      z-index:4;
-      box-shadow:1px 0 0 rgba(15,23,42,.04);
+      left:var(--resp-col-width); min-width:var(--type-col-width); width:var(--type-col-width);
+      text-align:left; background:#fff; z-index:4; box-shadow:1px 0 0 rgba(15,23,42,.04);
     }
     .type-cell{font-weight:600;color:#475569}
     .resp-cell{font-weight:700;font-size:15px;text-transform:capitalize;padding:0 12px}
     .ovr-input{width:62px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:8px;text-align:center}
     #rp_tableWrap{overflow:auto;border:1px solid #eee;border-radius:10px;margin:0 16px 12px;background:#fff;position:relative}
 
-    /* Colores especiales en reporte */
     .col-sat{ background:var(--sat) !important; }
     .col-sun{ background:var(--sun) !important; }
     .plan-zero{ background:transparent !important; }
@@ -151,16 +143,9 @@
     .plan-cell.readonly span{font-weight:600}
     .plan-cell.readonly .value{min-width:24px;text-align:center}
     .comment-pin{
-      position:absolute;top:4px;right:4px;
-      width:18px;height:18px;
-      border-radius:999px;
-      border:1px solid transparent;
-      background:rgba(148,163,184,.12);
-      color:#475569;
-      font-size:11px;line-height:1;
-      display:flex;align-items:center;justify-content:center;
-      cursor:pointer;transition:transform .15s,background .15s,border-color .15s,color .15s;
-      padding:0;
+      position:absolute;top:4px;right:4px;width:18px;height:18px;border-radius:999px;border:1px solid transparent;
+      background:rgba(148,163,184,.12);color:#475569;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;
+      cursor:pointer;transition:transform .15s,background .15s,border-color .15s,color .15s;padding:0;
     }
     .comment-pin::before{content:"💬";transform:scale(.84);}
     .comment-pin:hover{transform:scale(1.08);}
@@ -168,27 +153,10 @@
     .comment-pin.has-comment{background:rgba(250,204,21,.24);border-color:rgba(250,204,21,.7);color:#92400e;}
     .comment-pin.bajada{background:#d1d5db;border-color:#94a3b8;color:#334155;}
 
-    /* Hoy */
-    :root{
-      --today-bg:#f5f3ff;
-      --today-ring:rgba(99,102,241,.45);
-      --today-wash:rgba(99,102,241,.18);
-    }
-    .today-col{
-      position:relative;
-      background:var(--today-bg) !important;
-      box-shadow:inset 0 0 0 9999px var(--today-wash);
-    }
-    .today-col::after{
-      content:"";
-      position:absolute;
-      inset:-2px;
-      border:2px solid var(--today-ring);
-      border-radius:8px;
-      pointer-events:none;
-    }
+    :root{ --today-bg:#f5f3ff; --today-ring:rgba(99,102,241,.45); --today-wash:rgba(99,102,241,.18); }
+    .today-col{ position:relative; background:var(--today-bg) !important; box-shadow:inset 0 0 0 9999px var(--today-wash); }
+    .today-col::after{ content:""; position:absolute; inset:-2px; border:2px solid var(--today-ring); border-radius:8px; pointer-events:none; }
 
-    /* Comentarios en planificado */
     .comment-preview{display:none}
     .comment-popover{position:absolute;min-width:240px;max-width:280px;background:#fff;border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 18px 40px rgba(15,23,42,.2);padding:12px;z-index:9000;display:none}
     .comment-popover.open{display:block}
@@ -204,23 +172,57 @@
     #chartWrap{margin:12px 16px 16px;border:1px solid #eee;border-radius:10px;padding:10px;background:#fff}
     #rp_detail{margin:0 16px 16px;border:1px dashed #e5e7eb;border-radius:10px;padding:10px;background:#fafafa}
 
-    /* Modal Área */
-    .modal-back{
-      position:fixed; inset:60px 0 0 0; display:none;
-      align-items:center; justify-content:center; background:rgba(0,0,0,.25); z-index:7000;
-    }
-    .modal{
-      width:min(820px,92vw); background:#fff; border-radius:12px; padding:12px;
-      box-shadow:0 20px 40px rgba(0,0,0,.25);
-    }
+    /* Modal base */
+    .modal-back{ position:fixed; inset:60px 0 0 0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.25); z-index:7000; }
+    .modal{ width:min(820px,92vw); background:#fff; border-radius:12px; padding:12px; box-shadow:0 20px 40px rgba(0,0,0,.25); }
 
-    /* flash highlight for selected area card */
-    @keyframes flash {
-      0% { box-shadow:0 0 0 rgba(14,165,233,0); background:#fff; }
-      20%{ box-shadow:0 0 0 6px rgba(14,165,233,.15); background:#e0f2fe; }
-      100%{ box-shadow:0 0 0 rgba(14,165,233,0); background:#fff; }
-    }
+    /* Modal EXPEDIENTES específico */
+    #expModal .modal{ width:min(1100px,95vw); }
+    #exp_table_wrap{ margin-top:8px; border:1px solid #eee; border-radius:10px; background:#fff; max-height:62vh; overflow:auto; }
+    #exp_table td{ text-align:left; }
+    #exp_counter{ margin-left:auto; font-size:12px; color:#475569; }
+
+    /* Animación flash */
+    @keyframes flash { 0%{box-shadow:0 0 0 rgba(14,165,233,0);background:#fff} 20%{box-shadow:0 0 0 6px rgba(14,165,233,.15);background:#e0f2fe} 100%{box-shadow:0 0 0 rgba(14,165,233,0);background:#fff} }
     .flash { animation: flash 1s ease-out 1; }
+
+    /* ===== Fix columnas fijas reporte ===== */
+    #rp_tableWrap{ position:relative; overflow:auto; }
+    table.report{ border-collapse:separate; border-spacing:0; table-layout:fixed; }
+    table.report th, table.report td{ position:static; }
+    th.sticky.l1, td.sticky.l1{ position:sticky; left:0; width:var(--resp-col-width); min-width:var(--resp-col-width); max-width:var(--resp-col-width); z-index:6; background:#fff; box-shadow:2px 0 0 rgba(15,23,42,.06); }
+    th.sticky.l2, td.sticky.l2{ position:sticky; left:calc(var(--resp-col-width) + 1px); width:var(--type-col-width); min-width:var(--type-col-width); max-width:var(--type-col-width); z-index:5; background:#fff; box-shadow:1px 0 0 rgba(15,23,42,.05); }
+    .resp-cell{ overflow:hidden; text-overflow:ellipsis; }
+
+    /* KPI compacto + 2 col */
+    #rp_kpiHeader.compact{ grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:8px; margin:6px 10px 10px; }
+    #rp_kpiHeader.compact .kpi-card{ padding:8px; border-radius:10px; }
+    #rp_kpiHeader.compact .kpi-card h4{ margin:0 0 6px; font-size:12px; color:#334155; }
+    #rp_kpiHeader.compact .kpi-metrics{ gap:8px; }
+    #rp_kpiHeader.compact .kpi-metric{ padding:6px; border-radius:8px; }
+    #rp_kpiHeader.compact .kpi-metric .m-label{ font-size:10px; letter-spacing:.3px; }
+    #rp_kpiHeader.compact .kpi-metric .m-val{ font-size:18px; font-weight:800; }
+    #rp_kpiHeader.compact .kpi-metric small{ font-size:10px; }
+    #kpiLeaderList.compact{ gap:6px; }
+    #kpiLeaderList.compact .leader-row{ padding:6px 8px; display:flex; align-items:center; justify-content:space-between; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; }
+    #kpiLeaderList.compact .leader-name, #kpiLeaderList.compact .leader-pct{ font-size:13px; font-weight:700; color:#0f172a; }
+    #kpiLeaderList.compact .badge{ background:#e0f2fe; border:1px solid #bae6fd; border-radius:999px; padding:2px 8px; font-size:12px; color:#0c4a6e; }
+    #kpiLeaderList.compact.twocol{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    #kpiLeaderList.compact.twocol .leader-row{ width:100%; }
+    @media (max-width:700px){ #kpiLeaderList.compact.twocol{ grid-template-columns:1fr; } }
+
+    /* Hoy anclado correctamente */
+    table.report th.today-col, table.report td.today-col{ position:relative!important; }
+
+    /* Ocultar chips de responsables */
+    #rp_chips{ display:none!important; }
+
+    /* Centrado real del número (lectura) + pin más chico en edición */
+    .plan-cell{ padding-right:0 }
+    .plan-cell.has-pin{ padding-right:18px }
+    .plan-cell.readonly{ justify-content:center!important; }
+    .plan-cell.readonly .value{ display:inline-block; min-width:24px; text-align:center; margin:0 auto; }
+    .comment-pin{ transform:scale(.85); }
   </style>
 </head>
 <body>
@@ -236,6 +238,7 @@
 
     <div id="rightControls">
       <button class="ghost" id="btnReport">📊 Reporte</button>
+      <button class="btn" id="btnExpedientes">📑 Expedientes</button>
       <select id="filterComunidad"><option value="">Comunidad (todas)</option></select>
       <select id="filterGrupo">
         <option value="">Grupo (todos)</option>
@@ -354,10 +357,40 @@
     </div>
   </div>
 
+  <!-- Modal EXPEDIENTES -->
+  <div id="expModal" class="modal-back" style="display:none">
+    <div class="modal">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <h3 style="margin:0">Reporte de expedientes</h3>
+        <button class="btn-small" id="exp_close">✕</button>
+      </div>
+      <div class="row" style="padding-top:0">
+        <label>Desde: <input type="date" id="exp_start"></label>
+        <label>Hasta: <input type="date" id="exp_end"></label>
+        <label>Grupo:
+          <select id="exp_grupo">
+            <option value="">Todos</option>
+            <option value="1">1</option><option value="2">2</option>
+            <option value="3">3</option><option value="4">4</option>
+            <option value="1er_entregable">1er_entregable</option>
+          </select>
+        </label>
+        <label>Responsable:
+          <select id="exp_resp"><option value="">Todos</option></select>
+        </label>
+        <button class="btn" id="exp_run">Filtrar</button>
+        <span id="exp_counter"></span>
+      </div>
+      <div id="exp_table_wrap">
+        <table id="exp_table" class="report" style="width:100%"></table>
+      </div>
+    </div>
+  </div>
+
   <!-- Drawer Reporte -->
   <aside id="reportDrawer" class="drawer" aria-hidden="true">
     <div class="drawer-head">
-      <h3 style="margin:0">Reporte — Planificado (manual) vs Elaborado (por UNIR)</h3>
+      <h3 style="margin:0">Reporte — Planificado vs Elaborado</h3>
       <button class="btn-small" id="rp_close">✕</button>
     </div>
 
@@ -365,7 +398,6 @@
       <label>Desde: <input id="rp_start" type="date"></label>
       <label>Hasta: <input id="rp_end" type="date"></label>
       <button class="btn" id="rp_run">Generar</button>
-      <!-- Un solo botón para editar todo -->
       <button class="ghost" id="rp_toggleEdit">✏️ Editar Planificado</button>
       <span id="rp_status" class="muted"></span>
     </div>
@@ -439,25 +471,20 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const numberFormatter = new Intl.NumberFormat('es-PE');
 
-/** ====== Helpers de fecha (evitar desfase -05:00) ====== **/
-function parseYmd(ymd){ const [y,m,d] = ymd.split("-").map(Number); return new Date(y, (m||1)-1, d||1); } // Local
+/** ====== Helpers fecha ====== **/
+function parseYmd(ymd){ const [y,m,d] = ymd.split("-").map(Number); return new Date(y, (m||1)-1, d||1); }
 function ymdFromDateLocal(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; }
 function dateKey(d){ return ymdFromDateLocal(d); }
-function buildDays(from, to){
-  const a=[]; const cur=new Date(from.getFullYear(), from.getMonth(), from.getDate());
-  const end=new Date(to.getFullYear(), to.getMonth(), to.getDate());
-  while(cur<=end){ a.push(new Date(cur)); cur.setDate(cur.getDate()+1); }
-  return a;
-}
+function buildDays(from, to){ const a=[]; const cur=new Date(from.getFullYear(), from.getMonth(), from.getDate()); const end=new Date(to.getFullYear(), to.getMonth(), to.getDate()); while(cur<=end){ a.push(new Date(cur)); cur.setDate(cur.getDate()+1); } return a; }
 
-/** ====== MAP (sin logo Leaflet) ====== **/
+/** ====== MAP ====== **/
 const map = L.map('map', { zoomControl:true, attributionControl:false }).setView([-15.5, -70.1], 17);
 L.control.attribution({ prefix:false }).addTo(map);
 L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom:21, attribution:'© Google' }).addTo(map);
 
 const normalStyle   = { color:"var(--predio)",    weight:2, fillOpacity:0.2 };
 const commStyle     = { color:"var(--comunidad)", weight:2, fillOpacity:0.2 };
-const otherStyle    = { color:"var(--otros)",     weight:2, fillOpacity:0.2 };
+const otherStyle    = { color:"#a855f7",          weight:2, fillOpacity:0.2 };
 const highlightStyle= { color:"var(--highlight)", weight:3, fillOpacity:0.4 };
 
 let selectedCodPrel = null;
@@ -692,7 +719,7 @@ async function runSuggest(q){
   suggestions.classList.add("active");
 }
 
-/** ====== FILTROS (Comunidad + Grupo) ====== **/
+/** ====== FILTROS MAPA ====== **/
 const selCom = document.getElementById("filterComunidad");
 const selGrupo = document.getElementById("filterGrupo");
 document.getElementById("btnFiltrar").addEventListener("click", applyFilters);
@@ -732,7 +759,7 @@ async function applyFilters(){
   if(bounds) map.fitBounds(bounds);
 }
 
-/** ====== LISTA GLOBAL DE RESPONSABLES ====== **/
+/** ====== RESPONSABLES ====== **/
 let RESPONSABLES = [];
 async function fetchResponsables(){
   const { data, error } = await client.from("cod_pred").select("responsable").not("responsable","is",null);
@@ -782,7 +809,151 @@ async function saveArea(){
   if(currentUnirId) highlightGroup(currentUnirId, false);
 }
 
-/** ====== DRAWER REPORTE (por UNIR) ====== **/
+/** ====== MODAL EXPEDIENTES ====== **/
+const btnExpedientes = document.getElementById('btnExpedientes');
+const expModalBack   = document.getElementById('expModal');
+const expCloseBtn    = document.getElementById('exp_close');
+const expStart       = document.getElementById('exp_start');
+const expEnd         = document.getElementById('exp_end');
+const expGrupo       = document.getElementById('exp_grupo');
+const expResp        = document.getElementById('exp_resp');
+const expRun         = document.getElementById('exp_run');
+const expTable       = document.getElementById('exp_table');
+const expCounter     = document.getElementById('exp_counter');
+
+btnExpedientes.addEventListener('click', openExpModal);
+expCloseBtn.addEventListener('click', closeExpModal);
+expRun.addEventListener('click', runExpedientes);
+
+function openExpModal(){
+  defaultExpDates();
+  hydrateExpSelects();
+  runExpedientes();
+  expModalBack.style.display = 'flex';
+}
+function closeExpModal(){ expModalBack.style.display = 'none'; }
+
+function defaultExpDates(){
+  const today = new Date();
+  const start = new Date(today.getFullYear(), today.getMonth(), 1);
+  expStart.value = ymdFromDateLocal(start);
+  expEnd.value   = ymdFromDateLocal(today);
+}
+function hydrateExpSelects(){
+  // Responsables
+  expResp.innerHTML = '<option value="">Todos</option>' + RESPONSABLES.map(n=>`<option value="${n}">${cap(n)}</option>`).join('');
+}
+
+async function runExpedientes(){
+  const start = expStart.value, end = expEnd.value;
+  if(!start || !end){ alert("Selecciona fechas"); return; }
+
+  let q = client.from("cod_pred")
+    .select("unir,cod_prel,codigo_mtc,titular,comunidad,responsable,grupo,fecha_elab")
+    .not("fecha_elab","is",null)
+    .gte("fecha_elab", start)
+    .lte("fecha_elab", end);
+
+  const g = expGrupo.value;
+  const r = expResp.value;
+  if(g) q = q.eq("grupo", g);
+  if(r) q = q.eq("responsable", r);
+
+  const { data, error } = await q.order('fecha_elab', { ascending:true });
+  if(error){ console.error(error.message); alert('Error consultando expedientes'); return; }
+
+  // Agrupar por UNIR (o por cod_prel si no tiene unir)
+  const map = new Map();
+  (data||[]).forEach(row=>{
+    const key = (row.unir==null ? `single:${row.cod_prel}` : `unir:${row.unir}`);
+    if(!map.has(key)){
+      map.set(key, {
+        unir: row.unir,
+        responsable: normResp(row.responsable),
+        grupo: row.grupo || "",
+        comunidad: row.comunidad || "",
+        mtc: row.codigo_mtc || "",
+        titular: row.titular || "",
+        fecha: (row.fecha_elab||"").toString().slice(0,10),
+        cods: []
+      });
+    }
+    map.get(key).cods.push(row.cod_prel);
+  });
+
+  const items = [...map.values()].sort((a,b)=> (a.fecha||"").localeCompare(b.fecha||"") || (a.comunidad||"").localeCompare(b.comunidad||""));
+
+  expCounter.textContent = `${items.length} ${items.length===1?'expediente':'expedientes'}`;
+
+  let html = `
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Responsable</th>
+        <th>Grupo</th>
+        <th>Comunidad</th>
+        <th>Código MTC</th>
+        <th>cod_prel</th>
+        <th>Unidos</th>
+        <th>Titular</th>
+        <th>Acción</th>
+      </tr>
+    </thead>
+    <tbody>
+  `;
+  html += items.map(it=>{
+    const unidos = it.cods.length > 1 ? `Sí (${it.cods.length})` : "No";
+    const codList = it.cods.map(c=>`<span class="badge" style="background:#eef2ff">${esc(c)}</span>`).join(' ');
+    const firstCod = it.cods[0] || "";
+    return `
+      <tr>
+        <td>${esc(it.fecha)}</td>
+        <td>${esc(cap(it.responsable||""))}</td>
+        <td>${esc(it.grupo||"")}</td>
+        <td>${esc(it.comunidad||"")}</td>
+        <td>${esc(it.mtc||"")}</td>
+        <td style="white-space:nowrap">${codList}</td>
+        <td>${unidos}</td>
+        <td>${esc(it.titular||"")}</td>
+        <td><button class="btn-small btn-focus-exp" data-unir="${it.unir??''}" data-cod="${firstCod}">Enfocar</button></td>
+      </tr>
+    `;
+  }).join('');
+  html += `</tbody>`;
+  expTable.innerHTML = html;
+
+  // Enfocar desde el reporte
+  document.querySelectorAll('.btn-focus-exp').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const unir = btn.getAttribute('data-unir');
+      const cod  = btn.getAttribute('data-cod');
+      await focusExpediente(unir, cod);
+    });
+  });
+}
+
+// Enfocar helper
+async function focusExpediente(unir, cod){
+  if(unir && unir !== 'null' && unir !== ''){
+    await selectFromReport(Number(unir), cod);
+  }else{
+    // buscar UNIR por si acaso
+    try{
+      const { data } = await client.from('cod_pred').select('unir').eq('cod_prel', cod).single();
+      if(data?.unir!=null){
+        await selectFromReport(Number(data.unir), cod);
+      }else{
+        selectedCodPrel = cod;
+        focusByCodPrel(cod);
+      }
+    }catch(e){
+      selectedCodPrel = cod;
+      focusByCodPrel(cod);
+    }
+  }
+}
+
+/** ====== DRAWER REPORTE ====== **/
 const drawer   = document.getElementById("reportDrawer");
 const btnOpen  = document.getElementById("btnReport");
 const btnClose = document.getElementById("rp_close");
@@ -805,7 +976,7 @@ btnClose.addEventListener("click", closeReport);
 
 function openReport(){
   defaultReportDates();
-  hydrateRespChips().then(()=> runReport());
+  runReport();
   drawer.classList.add("open");
   drawer.setAttribute("aria-hidden","false");
 }
@@ -817,27 +988,12 @@ function closeReport(){
 rpRun.addEventListener("click", runReport);
 rpToggle.addEventListener("click", ()=>{ rpEditMode = !rpEditMode; rpToggle.textContent = rpEditMode ? "✅ Terminar edición" : "✏️ Editar Planificado"; runReport(); });
 
-/* Por pedido: del 02 al 31 de octubre (año actual) */
 function defaultReportDates(){
   const Y = new Date().getFullYear();
   rpStart.value = `${Y}-09-02`;
-  rpEnd.value   = `${Y}-10-31`;
+  rpEnd.value   = `${Y}-10-25`;
 }
 
-async function hydrateRespChips(){
-  await fetchResponsables();
-  rpChips.innerHTML = "";
-  if(RESPONSABLES.length===0){ rpChips.innerHTML = `<span class="muted">No hay responsables registrados.</span>`; return; }
-  RESPONSABLES.forEach(name=>{
-    const id = "rp_chk_"+name.replace(/\s+/g,'_');
-    const capName = cap(name);
-    const lbl = document.createElement("label");
-    lbl.className = "chip active";
-    lbl.innerHTML = `<input id="${id}" type="checkbox" class="rp-resp" value="${name}" checked> ${capName}`;
-    lbl.querySelector("input").addEventListener("change",(e)=> lbl.classList.toggle("active", e.target.checked));
-    rpChips.appendChild(lbl);
-  });
-}
 function selectedResp(){
   const set = new Set();
   document.querySelectorAll(".rp-resp:checked").forEach(cb=> set.add(cb.value));
@@ -850,11 +1006,7 @@ function handleCommentOutside(e){
   if(commentPopoverState?.anchor && commentPopoverState.anchor.contains(e.target)) return;
   closeCommentPopover();
 }
-
-function handleCommentEscape(e){
-  if(e.key === 'Escape') closeCommentPopover();
-}
-
+function handleCommentEscape(e){ if(e.key === 'Escape') closeCommentPopover(); }
 function closeCommentPopover(){
   if(!commentPopoverEl) return;
   commentPopoverEl.classList.remove('open');
@@ -864,12 +1016,10 @@ function closeCommentPopover(){
   document.removeEventListener('keydown', handleCommentEscape);
   commentPopoverState = null;
 }
-
 function openCommentPopover({ resp, fecha, anchor, comment, editable }){
   if(!commentPopoverEl || !anchor) return;
   if(commentPopoverState && commentPopoverState.anchor === anchor && commentPopoverEl.classList.contains('open')){
-    closeCommentPopover();
-    return;
+    closeCommentPopover(); return;
   }
   closeCommentPopover();
 
@@ -917,10 +1067,7 @@ function openCommentPopover({ resp, fecha, anchor, comment, editable }){
 
   if(editable){
     const textarea = commentPopoverEl.querySelector('#commentInput');
-    if(textarea){
-      textarea.value = comment || '';
-      textarea.focus();
-    }
+    if(textarea){ textarea.value = comment || ''; textarea.focus(); }
     const saveBtn = commentPopoverEl.querySelector('[data-action="save"]');
     if(saveBtn){
       saveBtn.addEventListener('click', async ()=>{
@@ -978,7 +1125,7 @@ function scrollReportToToday(idx){
   });
 }
 
-// Tabla 'plan_pred' (responsable, fecha, valor)
+// Tabla 'plan_pred'
 async function fetchPlan(start, end){
   const { data, error } = await client.from("plan_pred")
     .select("responsable,fecha,valor,coment")
@@ -989,7 +1136,7 @@ async function fetchPlan(start, end){
 async function savePlanEntry(resp, fecha, patch = {}){
   const dow = parseYmd(fecha).getDay(); // 0=Dom,6=Sab
   const hasValor = Object.prototype.hasOwnProperty.call(patch, "valor");
-  if(hasValor && (dow===0 || dow===6)) return; // valores solo L-V
+  if(hasValor && (dow===0 || dow===6)) return;
 
   const payload = { responsable: resp, fecha, ...patch };
   if(!hasValor){
@@ -1007,7 +1154,7 @@ async function savePlanEntry(resp, fecha, patch = {}){
 async function runReport(){
   const start = rpStart.value, end = rpEnd.value;
   if(!start || !end){ alert("Selecciona fechas"); return; }
-  const allowed = selectedResp(); // vacío => todos
+  const allowed = selectedResp();
 
   rpStatus.textContent = "Cargando…";
   closeCommentPopover();
@@ -1015,7 +1162,7 @@ async function runReport(){
 
   const year = parseYmd(start).getFullYear();
   const generalStart = `${year}-09-01`;
-  const generalEnd = `${year}-10-31`;
+  const generalEnd = `${year}-10-25`;
 
   const [rangeResp, generalResp, planRows, planRowsGeneral] = await Promise.all([
     client
@@ -1035,21 +1182,17 @@ async function runReport(){
   ]);
 
   if(rangeResp.error){ rpStatus.textContent = "Error: "+rangeResp.error.message; return; }
-  if(generalResp.error){ console.warn("cod_pred (general):", generalResp.error.message); }
 
   const groups = buildGroupsMap(rangeResp.data||[], allowed);
   const generalGroups = buildGroupsMap(generalResp.data||[], allowed);
 
-  // Días del rango
   const dFrom = parseYmd(start), dTo = parseYmd(end);
   const days = buildDays(dFrom, dTo);
   const dKeys = days.map(dateKey);
-  const dMeta = days.map(d => ({ key: ymdFromDateLocal(d), dow: d.getDay() })); // dow 0..6
+  const dMeta = days.map(d => ({ key: ymdFromDateLocal(d), dow: d.getDay() }));
 
-  // Responsables activos
   const resps = [...new Set([...groups.values()].map(g=>g.responsable))].filter(Boolean).sort();
 
-  // Contadores: elaborado por día (por UNIR), plan desde plan_pred
   const doneCounts = {}; const planCounts = {}; const planComments = {};
   resps.forEach(r=>{
     doneCounts[r] = Object.fromEntries(dKeys.map(k=>[k,0]));
@@ -1057,10 +1200,8 @@ async function runReport(){
     planComments[r] = Object.fromEntries(dKeys.map(k=>[k,null]));
   });
 
-  // Mapa de celdas para detalle
-  const cellMapDone = new Map(); // `${resp}|${day}` -> array de grupos {comunidad,codigo_mtc,unirId,cods[]}
+  const cellMapDone = new Map();
 
-  // Llenar 'done' (uno por UNIR)
   groups.forEach(g=>{
     const r = g.responsable; const k = g.fecha;
     if(!r || !k || !(k in (doneCounts[r]||{}))) return;
@@ -1069,7 +1210,6 @@ async function runReport(){
     cellMapDone.get(ck).push({ comunidad: g.comunidad, codigo_mtc: g.codigo_mtc, unirId: g.unirId, cods: g.cods });
   });
 
-  // Traer planificado y volcar al mapa
   (planRows||[]).forEach(p=>{
     const r = normResp(p.responsable);
     const k = (p.fecha||"").toString().slice(0,10);
@@ -1083,16 +1223,12 @@ async function runReport(){
   window._rp_planComments = planComments;
 
   const todayKey = dateKey(new Date());
-
   const planDaily = dMeta.map(({key}) => resps.reduce((acc,r)=> acc + (planCounts[r]?.[key]||0), 0));
   const doneDaily = dMeta.map(({key}) => resps.reduce((acc,r)=> acc + (doneCounts[r]?.[key]||0), 0));
 
   const todayIdxRaw = dKeys.indexOf(todayKey);
   let todayIdx = todayIdxRaw;
-  if(todayIdx === -1){
-    todayIdx = -1;
-    dKeys.forEach((k,i)=>{ if(k<=todayKey) todayIdx = i; });
-  }
+  if(todayIdx === -1){ todayIdx = -1; dKeys.forEach((k,i)=>{ if(k<=todayKey) todayIdx = i; }); }
 
   const planToToday = todayIdx >=0 ? planDaily.slice(0, todayIdx+1).reduce((acc,v)=>acc+v,0) : 0;
   const doneToToday = todayIdx >=0 ? doneDaily.slice(0, todayIdx+1).reduce((acc,v)=>acc+v,0) : 0;
@@ -1137,7 +1273,7 @@ async function runReport(){
     leaders
   });
 
-  // Render tabla
+  // Tabla
   let html = "<tr>";
   html += `<th class="sticky l1">RESPONSABLE</th>`;
   html += `<th class="sticky l2">TIPO</th>`;
@@ -1154,7 +1290,7 @@ async function runReport(){
     const respLabel = esc(cap(r));
     const commentCols = new Map();
 
-    // Fila planificado
+    // Planificado
     let rowPlan = 0;
     html += `<tr class="plan-row">`;
     html += `<td class="sticky l1" rowspan="2"><div class="resp-cell">${respLabel}</div></td>`;
@@ -1171,36 +1307,34 @@ async function runReport(){
         key===todayKey ? "today-col" : "",
         hasComment ? `comment-cell${isBajada ? " comment-bajada" : ""}` : ""
       ].filter(Boolean).join(" ");
-      const showPin = rpEditMode || hasComment;
+      const showPin = rpEditMode;
       const pinClasses = ["comment-pin"];
       if(hasComment) pinClasses.push("has-comment");
       else if(rpEditMode) pinClasses.push("empty");
       if(isBajada) pinClasses.push("bajada");
-      const ariaLabel = hasComment
-        ? (rpEditMode ? "Editar comentario" : "Ver comentario")
-        : "Agregar comentario";
-      const pinHtml = showPin
-        ? `<button type="button" class="${pinClasses.join(" ")}" data-resp="${r}" data-date="${key}" aria-label="${esc(ariaLabel)}"></button>`
-        : "";
+      const ariaLabel = hasComment ? (rpEditMode ? "Editar comentario" : "Ver comentario") : "Agregar comentario";
+      const pinHtml = showPin ? `<button type="button" class="${pinClasses.join(" ")}" data-resp="${r}" data-date="${key}" aria-label="${esc(ariaLabel)}"></button>` : "";
 
       if(rpEditMode){
         const disabled = (dow===0 || dow===6) ? "disabled" : "";
         html += `<td class="${classes}">
-          <div class="plan-cell">
+          <div class="plan-cell has-pin">
             <input class="ovr-input" data-resp="${r}" data-date="${key}" type="number" min="0" value="${val}" ${disabled}>
             ${pinHtml}
           </div>
         </td>`;
       }else{
         html += `<td class="${classes}">
-          <div class="plan-cell readonly"><span class="value">${val}</span>${pinHtml}</div>
+          <div class="plan-cell readonly">
+            <span class="value" data-open-comment="1" data-resp="${r}" data-date="${key}">${val}</span>
+          </div>
         </td>`;
       }
     });
     html += `<td><b>${rowPlan}</b></td>`;
     html += `</tr>`;
 
-    // Fila elaborado
+    // Elaborado
     let rowDone = 0;
     html += `<tr class="done-row">`;
     html += `<td class="sticky l2 type-cell">Elaborado</td>`;
@@ -1226,8 +1360,18 @@ async function runReport(){
 
   rpTable.innerHTML = html;
 
-  // Mantener fija la columna de responsables: no centrar automáticamente en la columna de hoy
-  // scrollReportToToday(todayIdx);
+  // Centrar en HOY
+  requestAnimationFrame(()=> scrollReportToToday(todayIdx));
+
+  // Click número para abrir comentario en lectura
+  rpTable.querySelectorAll('.plan-cell.readonly [data-open-comment="1"]').forEach(el=>{
+    el.addEventListener('click', (e)=>{
+      const resp  = el.getAttribute('data-resp');
+      const fecha = el.getAttribute('data-date');
+      const current = window._rp_planComments?.[resp]?.[fecha] || "";
+      openCommentPopover({ resp, fecha, anchor: el, comment: current, editable: rpEditMode });
+    });
+  });
 
   // Guardado inline
   rpTable.querySelectorAll(".ovr-input:not([disabled])").forEach(inp=>{
@@ -1246,7 +1390,7 @@ async function runReport(){
     });
   });
 
-  // Comentarios
+  // Comentarios (edición)
   rpTable.querySelectorAll(".comment-pin").forEach(btn=>{
     btn.addEventListener("click", (e)=>{
       e.stopPropagation();
@@ -1257,24 +1401,13 @@ async function runReport(){
     });
   });
 
-  // Gráfico curva S (acumulados)
-  const labels = dMeta.map(({key})=>{
-    const d = parseYmd(key); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
-  });
-  const planCum = [];
-  planDaily.reduce((acc,v)=>{ const next=acc+v; planCum.push(next); return next; },0);
-
-  const doneCum = [];
-  doneDaily.reduce((acc,v,idx)=>{
-    if(todayIdx>=0 && idx>todayIdx){ doneCum.push(null); return acc; }
-    const next = acc+v; doneCum.push(next); return next;
-  },0);
-
+  // Curva S
+  const labels = dMeta.map(({key})=>{ const d = parseYmd(key); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`; });
+  const planCum = []; planDaily.reduce((acc,v)=>{ const next=acc+v; planCum.push(next); return next; },0);
+  const doneCum = []; doneDaily.reduce((acc,v,idx)=>{ if(todayIdx>=0 && idx>todayIdx){ doneCum.push(null); return acc; } const next=acc+v; doneCum.push(next); return next; },0);
   renderReportCurve(labels, planCum, doneCum, todayIdx);
 
-  // Exponer mapa para detalle
   window._rp_cellMapDone = cellMapDone;
-
   rpStatus.textContent = "Listo.";
 }
 
@@ -1303,10 +1436,10 @@ function buildGroupsMap(rows, allowed = new Set()){
 
 function renderHeaderKpis({ generalPlan, generalDone, generalPct, generalRange, todayPlan, todayDone, todayPct, todayRange, leaders }){
   const fmt = (n) => numberFormatter.format(Math.round(n || 0));
-  const setText = (id, val) => {
-    const el = document.getElementById(id);
-    if(el) el.textContent = val;
-  };
+  const setText = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+
+  document.getElementById('rp_kpiHeader')?.classList.add('compact');
+  document.getElementById('kpiLeaderList')?.classList.add('compact','twocol');
 
   setText('kpiGeneralPlan', fmt(generalPlan));
   setText('kpiGeneralDone', fmt(generalDone));
@@ -1325,32 +1458,23 @@ function renderHeaderKpis({ generalPlan, generalDone, generalPct, generalRange, 
     listEl.innerHTML = '<div class="muted">Sin responsables en el rango.</div>';
     return;
   }
-
   listEl.innerHTML = leaders.map(l => {
     const pct = Math.round(l.pct || 0);
-    const barPct = Math.max(0, Math.min(100, pct));
     const doneLabel = fmt(l.done);
-    const planLabel = l.plan > 0 ? fmt(l.plan) : null;
-    const badgeText = planLabel ? `${doneLabel} / ${planLabel}` : `${doneLabel}`;
-    const planCaption = planLabel ? 'Elaborados / planificados' : 'Elaborados';
-    const planText = planLabel ? `${planLabel} planificados` : 'Sin plan definido';
+    const planLabel = l.plan > 0 ? fmt(l.plan) : '—';
     return `
-      <div class="leader-item">
-        <div class="leader-head">
-          <span>${esc(l.name)}</span>
-          <span>${pct}%</span>
+      <div class="leader-row">
+        <div class="leader-main">
+          <span class="leader-name">${esc(l.name)}</span>
+          <span class="badge" title="Elaborado / Planificado">${doneLabel} / ${planLabel}</span>
         </div>
-        <div class="leader-meta">
-          <span class="badge" title="${esc(planCaption)}">${esc(badgeText)}</span>
-          <span>${esc(planText)}</span>
-        </div>
-        <div class="leader-progress"><span style="width:${barPct}%"></span></div>
+        <span class="leader-pct">${pct}%</span>
       </div>
     `;
   }).join('');
 }
 
-// Detalle de una celda (lista de grupos UNIR con sus códigos clicables)
+// Detalle de una celda (lista de grupos UNIR con sus códigos)
 window.openRpCell = function(resp, ymd){
   const list = (window._rp_cellMapDone?.get(`${resp}|${ymd}`)) || [];
   const rows = list.map(g=>{
@@ -1371,7 +1495,6 @@ window.openRpCell = function(resp, ymd){
   rpDetail.style.display = "block";
 };
 
-// Click en código de detalle => seleccionar en mapa + panel
 rpDetail.addEventListener("click", async (e)=>{
   const btn = e.target.closest(".code-link");
   if(!btn) return;
@@ -1385,8 +1508,7 @@ async function selectFromReport(unir, cod){
   selectedCodPrel = cod;
   focusByCodPrel(cod);
   highlightGroup(Number(unir), false);
-  // Resaltar tarjeta del área
-  const card = Array.from(listAreas.querySelectorAll(".area-card")).find(el => el.getAttribute("data-cod") === cod);
+  const card = Array.from(document.getElementById("areasList").querySelectorAll(".area-card")).find(el => el.getAttribute("data-cod") === cod);
   if(card){
     card.classList.add("flash");
     card.scrollIntoView({ behavior:"smooth", block:"center" });
@@ -1428,41 +1550,14 @@ function renderReportCurve(labels, planCum, doneCum, todayIdx){
     data: {
       labels,
       datasets: [
-        {
-          label: 'Planificado acumulado',
-          data: planCum,
-          tension: 0.3,
-          borderColor: '#0ea5e9',
-          backgroundColor: 'rgba(14,165,233,.12)',
-          fill: false,
-          pointRadius: 3
-        },
-        {
-          label: 'Elaborado acumulado',
-          data: doneCum,
-          tension: 0.3,
-          borderColor: '#22c55e',
-          backgroundColor: 'rgba(34,197,94,.12)',
-          fill: false,
-          pointRadius: 3,
-          spanGaps: true
-        }
+        { label: 'Planificado acumulado', data: planCum, tension: 0.3, borderColor: '#0ea5e9', backgroundColor: 'rgba(14,165,233,.12)', fill: false, pointRadius: 3 },
+        { label: 'Elaborado acumulado', data: doneCum, tension: 0.3, borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,.12)', fill: false, pointRadius: 3, spanGaps: true }
       ]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'top' },
-        tooltip: { enabled: true },
-        todayLine: { index: todayIdx }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: { precision: 0 }
-        }
-      }
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' }, tooltip: { enabled: true }, todayLine: { index: todayIdx } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
     }
   });
 }
