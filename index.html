@@ -1210,32 +1210,35 @@ function getExpSortIndicator(column){
 function exportExpedientes(){
   if(!expItems.length){ alert('No hay datos para exportar'); return; }
   const sortedItems = sortExpItems(expItems.slice());
-  const lf = String.fromCharCode(10);
-  const headers = ['Comunidad','Código MTC','cod_prel','Titular'];
-  const rows = sortedItems.map(item=>[
-    item.comunidad || '',
-    item.mtc || '',
-    item.cods.length ? item.cods.join(lf) : '',
-    item.titular || ''
-  ]);
-  const csv = [headers, ...rows].map(row=>row.map(csvEscape).join(',')).join('\r\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const maxCods = Math.max(1, sortedItems.reduce((max,item)=>Math.max(max,item.cods?.length||0),0));
+  const codHeaders = Array.from({length:maxCods},(_,i)=>`cod_prel ${i+1}`);
+  const headers = ['Comunidad','Código MTC', ...codHeaders, 'Titular'];
+  const tableRows = sortedItems.map(item=>{
+    const codCells = Array.from({length:maxCods},(_,i)=>htmlEscape(item.cods?.[i] || ''));
+    return `    <tr><td>${htmlEscape(item.comunidad||'')}</td><td>${htmlEscape(item.mtc||'')}</td>${codCells.map(c=>`<td>${c}</td>`).join('')}<td>${htmlEscape(item.titular||'')}</td></tr>`;
+  });
+  const tableHtml = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"></head><body><table border="1"><thead><tr>${headers.map(h=>`<th>${htmlEscape(h)}</th>`).join('')}</tr></thead><tbody>\n${tableRows.join('\n')}\n  </tbody></table></body></html>`;
+  const bom = '\uFEFF';
+  const blob = new Blob([bom + tableHtml], { type:'application/vnd.ms-excel;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
   const start = expStart.value || 'inicio';
   const end = expEnd.value || 'fin';
-  link.download = `reporte_expedientes_${start}_${end}.csv`;
+  link.download = `reporte_expedientes_${start}_${end}.xls`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
 
-function csvEscape(value){
-  const str = (value ?? '').toString();
-  const escaped = str.replace(/"/g, '""');
-  return /[",\n\r]/.test(str) ? `"${escaped}"` : escaped;
+function htmlEscape(value){
+  return (value ?? '').toString()
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
 }
 
 // Enfocar helper
