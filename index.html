@@ -176,7 +176,8 @@ on:relative}
 
     @media print{
       header,#split,#globalLoader,#commentPopover{display:none !important;}
-      body{overflow:visible !important;}
+      body{overflow:visible !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;}
+      table.report th,table.report td{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;}
       .drawer{position:static !important;transform:none !important;width:auto !important;height:auto !important;box-shadow:none !important;border:none !important;}
       .drawer-head{position:static !important;}
       .print-hidden{display:none !important;}
@@ -1221,6 +1222,7 @@ class ReportModule {
     this.dMeta = [];
     this.dateKeys = [];
     this.activeDetailDay = null;
+    this.currentTodayIdx = -1;
 
     this.openBtn?.addEventListener('click', ()=>this.open());
     this.closeBtn?.addEventListener('click', ()=>this.close());
@@ -1633,7 +1635,8 @@ class ReportModule {
 
     this.table.innerHTML = html;
     this.attachTableEvents();
-    this.scrollToToday(todayIdx);
+    this.currentTodayIdx = typeof todayIdx === 'number' ? todayIdx : -1;
+    this.scrollToToday(this.currentTodayIdx);
   }
 
   attachTableEvents(){
@@ -1672,18 +1675,33 @@ class ReportModule {
     });
   }
 
-  scrollToToday(idx){
+  scrollToToday(idx, opts = {}){
     if(idx == null || idx < 0) return;
     if(!this.tableWrap || !this.table) return;
-    requestAnimationFrame(()=>{
+    const { behavior = 'smooth', immediate = false } = opts;
+    const applyScroll = ()=>{
       const headerRow = this.table.querySelector('tr');
       if(!headerRow) return;
       const target = headerRow.querySelector(`th:nth-child(${idx + 3})`);
       if(!target) return;
       const desired = target.offsetLeft - (this.tableWrap.clientWidth/2) + (target.offsetWidth/2);
       const left = desired < 0 ? 0 : desired;
-      this.tableWrap.scrollTo({ left, behavior: 'smooth' });
-    });
+      if(typeof this.tableWrap.scrollTo === 'function' && behavior !== 'auto'){
+        this.tableWrap.scrollTo({ left, behavior });
+      }else{
+        this.tableWrap.scrollLeft = left;
+      }
+    };
+    if(immediate){
+      applyScroll();
+    }else{
+      requestAnimationFrame(applyScroll);
+    }
+  }
+
+  syncBeforePrint(){
+    if(this.currentTodayIdx == null || this.currentTodayIdx < 0) return;
+    this.scrollToToday(this.currentTodayIdx, { behavior: 'auto', immediate: true });
   }
 
   renderCurve(dMeta, planDaily, doneDaily, todayIdx){
@@ -2125,6 +2143,23 @@ const reportLegal = new ReportModule({
 
 window.reportTech = reportTech;
 window.reportLegal = reportLegal;
+
+const syncReportScrollForPrint = ()=>{
+  Object.values(REPORT_MODULES).forEach(mod=>{
+    if(mod && typeof mod.syncBeforePrint === 'function'){
+      mod.syncBeforePrint();
+    }
+  });
+};
+
+window.addEventListener('beforeprint', syncReportScrollForPrint);
+
+if(window.matchMedia){
+  const mq = window.matchMedia('print');
+  const mqListener = e=>{ if(e.matches) syncReportScrollForPrint(); };
+  if(typeof mq.addEventListener === 'function') mq.addEventListener('change', mqListener);
+  else if(typeof mq.addListener === 'function') mq.addListener(mqListener);
+}
 
 function esc(s){ return (s??"").toString().replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
 function cap(r){ return (r||"").replace(/\b\w/g,m=>m.toUpperCase()); }
