@@ -158,7 +158,21 @@ on:relative}
     .today-col{ position:relative; background:var(--today-bg) !important; box-shadow:inset 0 0 0 9999px var(--today-wash); }
     .today-col::after{ content:""; position:absolute; inset:-2px; border:2px solid var(--today-ring); border-radius:8px; pointer-events:none; }
 
-    .comment-preview{display:none}
+    .comment-preview{
+      margin:8px 0 10px;
+      padding:8px 10px;
+      background:var(--comment-bg);
+      border:1px solid rgba(250,204,21,.5);
+      border-radius:8px;
+      color:#713f12;
+      font-size:13px;
+      line-height:1.45;
+      box-shadow:0 4px 14px rgba(113,63,18,.08);
+      white-space:pre-wrap;
+    }
+    .comment-preview .comment-title{display:block;font-size:12px;color:#92400e;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+    .comment-preview.bajada{background:#e5e7eb;border-color:rgba(148,163,184,.7);color:#1f2937;box-shadow:0 4px 14px rgba(30,41,59,.08)}
+    .comment-preview.bajada .comment-title{color:#1f2937}
 
     /* ===== Global loader ===== */
     #globalLoader{
@@ -514,6 +528,8 @@ on:relative}
       <canvas id="rp_chart" height="336"></canvas>
     </div>
 
+    <div id="rp_detail" class="block" style="display:none"></div>
+
     <div id="rp_todaySummary" class="block" style="display:none"></div>
   </aside>
 
@@ -585,7 +601,7 @@ on:relative}
       <table id="lr_table" class="report"></table>
     </div>
 
-    <div id="lr_detail" style="display:none"></div>
+    <div id="lr_detail" class="block" style="display:none"></div>
 
     <div id="lr_chartWrap" style="display:none">
       <canvas id="lr_chart" height="336"></canvas>
@@ -1279,13 +1295,15 @@ class ReportModule {
 
   async savePlanEntry(resp, fecha, patch = {}){
     if(!this.config.planTable || !this.config.planRespField) return;
+    const normalizedResp = normResp(resp);
+    if(!normalizedResp || !fecha) return;
     const dow = parseYmd(fecha).getDay();
     const hasValor = Object.prototype.hasOwnProperty.call(patch, 'valor');
     if(hasValor && (dow===0 || dow===6)) return;
-    const payload = { [this.config.planRespField]: resp, fecha, ...patch };
+    const payload = { [this.config.planRespField]: normalizedResp, fecha, ...patch };
     if(!hasValor){
-      const current = this.planCounts?.[resp]?.[fecha];
-      if(typeof current === 'number') payload.valor = current;
+      const current = this.planCounts?.[normalizedResp]?.[fecha];
+      payload.valor = typeof current === 'number' ? Number(current) || 0 : 0;
     }else{
       payload.valor = Number(payload.valor)||0;
     }
@@ -1711,6 +1729,14 @@ class ReportModule {
     }else{
       sections = resps.map(r=>{
         const list = this.cellMapDone?.get(`${r}|${ymd}`) || [];
+        const commentRaw = this.planComments?.[r]?.[ymd] || '';
+        const commentTrimmed = commentRaw.trim();
+        const hasComment = commentTrimmed !== '';
+        const isBajada = commentTrimmed.toLowerCase() === 'bajada';
+        const commentBody = hasComment ? esc(commentRaw).replace(/\n/g,'<br>') : '';
+        const commentHtml = hasComment
+          ? `<div class="comment-preview${isBajada ? ' bajada' : ''}"><span class="comment-title">${isBajada ? 'Bajada' : 'Comentario'}</span>${commentBody}</div>`
+          : '';
         const rows = list.map(g=>{
           const codes = g.cods.map(c=>`<button class="code-link" data-code="${esc(c)}" data-unir="${g.unirId}">${esc(c)}</button>`).join('');
           return `<tr><td>${esc(g.comunidad)}</td><td>${esc(g.codigo_mtc)}</td><td style="text-align:left">${codes}</td></tr>`;
@@ -1722,6 +1748,7 @@ class ReportModule {
         if(primaryResp && r === primaryResp) classes.push('active');
         return `<div class="${classes.join(' ')}">
           <h4>${esc(cap(r))} · ${countLabel}</h4>
+          ${commentHtml}
           <div style="overflow:auto"><table class="report">
             <thead><tr><th>Comunidad</th><th>Código MTC</th><th>cod_prel (grupo UNIR)</th></tr></thead>
             <tbody>${rowBody}</tbody>
@@ -1743,10 +1770,14 @@ class ReportModule {
       this.todaySummaryEl.innerHTML = '';
       return;
     }
+    const hasCommentFor = (resp)=>{
+      const raw = this.planComments?.[resp]?.[todayKey] || '';
+      return raw.trim() !== '';
+    };
     const sections = this.resps.map(r=>({
       resp: r,
       list: cellMapDone.get(`${r}|${todayKey}`) || []
-    })).filter(item => item.list.length > 0);
+    })).filter(item => item.list.length > 0 || hasCommentFor(item.resp));
 
     if(sections.length === 0){
       this.todaySummaryEl.innerHTML = '<div class="muted">Sin expedientes con avance hoy.</div>';
@@ -1755,11 +1786,20 @@ class ReportModule {
     }
 
     const body = sections.map(item=>{
+      const commentRaw = this.planComments?.[item.resp]?.[todayKey] || '';
+      const commentTrimmed = commentRaw.trim();
+      const hasComment = commentTrimmed !== '';
+      const isBajada = commentTrimmed.toLowerCase() === 'bajada';
+      const commentBody = hasComment ? esc(commentRaw).replace(/\n/g,'<br>') : '';
+      const commentHtml = hasComment
+        ? `<div class="comment-preview${isBajada ? ' bajada' : ''}"><span class="comment-title">${isBajada ? 'Bajada' : 'Comentario'}</span>${commentBody}</div>`
+        : '';
       const rows = item.list.map(g=>{
         const codes = g.cods.map(c=>`<button class="code-link" data-code="${esc(c)}" data-unir="${g.unirId}">${esc(c)}</button>`).join('');
         return `<tr><td>${esc(g.comunidad)}</td><td>${esc(g.codigo_mtc)}</td><td style="text-align:left">${codes}</td></tr>`;
       }).join('');
-      return `<div class="today-section"><h4>${esc(cap(item.resp))}</h4><table class="report" style="width:100%"><thead><tr><th>Comunidad</th><th>Código MTC</th><th>cod_prel</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+      const tableBody = rows || '<tr><td colspan="3" class="muted">Sin expedientes</td></tr>';
+      return `<div class="today-section"><h4>${esc(cap(item.resp))}</h4>${commentHtml}<table class="report" style="width:100%"><thead><tr><th>Comunidad</th><th>Código MTC</th><th>cod_prel</th></tr></thead><tbody>${tableBody}</tbody></table></div>`;
     }).join('');
 
     const suffix = this.config.todaySummaryTitle ? ` ${esc(this.config.todaySummaryTitle)}` : '';
