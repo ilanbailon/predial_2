@@ -174,6 +174,14 @@ on:relative}
     .comment-preview.bajada{background:#e5e7eb;border-color:rgba(148,163,184,.7);color:#1f2937;box-shadow:0 4px 14px rgba(30,41,59,.08)}
     .comment-preview.bajada .comment-title{color:#1f2937}
 
+    @media print{
+      header,#split,#globalLoader,#commentPopover{display:none !important;}
+      body{overflow:visible !important;}
+      .drawer{position:static !important;transform:none !important;width:auto !important;height:auto !important;box-shadow:none !important;border:none !important;}
+      .drawer-head{position:static !important;}
+      .print-hidden{display:none !important;}
+    }
+
     /* ===== Global loader ===== */
     #globalLoader{
       position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -459,15 +467,16 @@ on:relative}
   <aside id="reportDrawer" class="drawer" aria-hidden="true">
     <div class="drawer-head">
       <h3 style="margin:0">Reporte — Planificado vs Elaborado</h3>
-      <button class="btn-small" id="rp_close">✕</button>
+      <button class="btn-small print-hidden" id="rp_close">✕</button>
     </div>
 
     <div class="row">
       <label>Desde: <input id="rp_start" type="date"></label>
       <label>Hasta: <input id="rp_end" type="date"></label>
-      <button class="btn" id="rp_run">Generar</button>
-      <button class="ghost" id="rp_todayBtn">📅 Hoy</button>
-      <button class="ghost" id="rp_toggleEdit">✏️ Editar Planificado</button>
+      <button class="btn print-hidden" id="rp_run">Generar</button>
+      <button class="ghost print-hidden" id="rp_todayBtn">📅 Hoy</button>
+      <button class="ghost print-hidden" id="rp_toggleEdit">✏️ Editar Planificado</button>
+      <button class="ghost print-hidden" id="rp_print">🖨️ Imprimir</button>
       <span id="rp_status" class="muted"></span>
     </div>
 
@@ -537,14 +546,15 @@ on:relative}
   <aside id="legalReportDrawer" class="drawer" aria-hidden="true">
     <div class="drawer-head">
       <h3 style="margin:0">Reporte — Avance Legal</h3>
-      <button class="btn-small" id="lr_close">✕</button>
+      <button class="btn-small print-hidden" id="lr_close">✕</button>
     </div>
 
     <div class="row">
       <label>Desde: <input id="lr_start" type="date"></label>
       <label>Hasta: <input id="lr_end" type="date"></label>
-      <button class="btn" id="lr_run">Generar</button>
-      <button class="ghost" id="lr_toggleEdit">✏️ Editar Planificado</button>
+      <button class="btn print-hidden" id="lr_run">Generar</button>
+      <button class="ghost print-hidden" id="lr_toggleEdit">✏️ Editar Planificado</button>
+      <button class="ghost print-hidden" id="lr_print">🖨️ Imprimir</button>
       <span id="lr_status" class="muted"></span>
     </div>
 
@@ -1178,6 +1188,7 @@ class ReportModule {
     this.runBtn = document.getElementById(config.runBtnId);
     this.todayBtn = config.todayButtonId ? document.getElementById(config.todayButtonId) : null;
     this.toggleBtn = config.toggleBtnId ? document.getElementById(config.toggleBtnId) : null;
+    this.printBtn = config.printBtnId ? document.getElementById(config.printBtnId) : null;
     this.statusEl = config.statusId ? document.getElementById(config.statusId) : null;
     this.chipsContainer = config.chipsContainerId ? document.getElementById(config.chipsContainerId) : null;
     this.table = document.getElementById(config.tableId);
@@ -1202,6 +1213,7 @@ class ReportModule {
 
     this.chart = null;
     this.editMode = false;
+    this.printTitle = config.printTitle || `${document.title || 'Geoportal'} — ${config.key}`;
     this.planCounts = {};
     this.planComments = {};
     this.cellMapDone = new Map();
@@ -1215,6 +1227,7 @@ class ReportModule {
     this.runBtn?.addEventListener('click', ()=>this.run());
     this.todayBtn?.addEventListener('click', ()=>this.runToday());
     this.toggleBtn?.addEventListener('click', ()=>this.toggleEdit());
+    this.printBtn?.addEventListener('click', ()=>this.print());
 
     if(this.detailEl){
       this.detailEl.addEventListener('click', async (e)=>{
@@ -1263,6 +1276,33 @@ class ReportModule {
       this.drawer.setAttribute('aria-hidden','true');
     }
     if(activeCommentModule === this) closeCommentPopover();
+  }
+
+  print(){
+    if(!this.drawer) return;
+    const printWindow = window.open('', '_blank', 'width=1200,height=900');
+    if(!printWindow){
+      alert('No se pudo abrir la ventana de impresión. Permite las ventanas emergentes para continuar.');
+      return;
+    }
+    const clone = this.drawer.cloneNode(true);
+    clone.classList.add('open');
+    clone.setAttribute('aria-hidden','false');
+    const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+      .map(node => node.outerHTML)
+      .join('');
+    const safeTitle = (this.printTitle || document.title || 'Reporte')
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;');
+    printWindow.document.open();
+    printWindow.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>${safeTitle}</title>${styles}<style>body{margin:0;padding:24px;background:#fff;color:#0f172a;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,\"Helvetica Neue\",Arial,sans-serif;} .drawer{position:static!important;transform:none!important;width:auto!important;height:auto!important;box-shadow:none!important;border:none!important;} .drawer-head{position:static!important;} .drawer .print-hidden{display:none!important;} .drawer .row{padding-left:0;padding-right:0;} @media print{body{padding:0;}}</style></head><body>${clone.outerHTML}</body></html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    if('onafterprint' in printWindow){
+      printWindow.onafterprint = ()=>{ try{ printWindow.close(); }catch(e){} };
+    }
+    setTimeout(()=>{ try{ printWindow.print(); }catch(e){} }, 500);
   }
 
   runToday(){
@@ -2002,7 +2042,9 @@ const reportTech = new ReportModule({
   startInputId: 'rp_start',
   endInputId: 'rp_end',
   runBtnId: 'rp_run',
+  todayButtonId: 'rp_todayBtn',
   toggleBtnId: 'rp_toggleEdit',
+  printBtnId: 'rp_print',
   statusId: 'rp_status',
   chipsContainerId: 'rp_chips',
   tableId: 'rp_table',
@@ -2033,7 +2075,8 @@ const reportTech = new ReportModule({
   planLabel: 'Planificado',
   doneLabel: 'Elaborado',
   detailTitlePrefix: 'Detalle',
-  todaySummaryTitle: 'técnico'
+  todaySummaryTitle: 'técnico',
+  printTitle: 'Reporte — Planificado vs Elaborado'
 });
 
 const reportLegal = new ReportModule({
@@ -2045,6 +2088,7 @@ const reportLegal = new ReportModule({
   endInputId: 'lr_end',
   runBtnId: 'lr_run',
   toggleBtnId: 'lr_toggleEdit',
+  printBtnId: 'lr_print',
   statusId: 'lr_status',
   chipsContainerId: 'lr_chips',
   tableId: 'lr_table',
@@ -2075,7 +2119,8 @@ const reportLegal = new ReportModule({
   planLabel: 'Planificado',
   doneLabel: 'Avance',
   detailTitlePrefix: 'Detalle legal',
-  todaySummaryTitle: 'legal'
+  todaySummaryTitle: 'legal',
+  printTitle: 'Reporte — Avance Legal'
 });
 
 window.reportTech = reportTech;
