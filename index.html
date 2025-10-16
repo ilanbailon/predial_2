@@ -96,7 +96,7 @@
     .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid #e2e8f0;border-radius:999px;background:#fff;cursor:pointer;margin-right:6px;margin-bottom:6px}
     .chip input{transform:scale(1.1)}
     .chip.active{background:#eef7ff;border-color:#bfdbfe}
-    #rp_kpiHeader{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin:8px 16px 16px}
+    #rp_kpiHeader,#lr_kpiHeader{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin:8px 16px 16px}
     .kpi-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px}
     .kpi-card h4{margin:0;font-size:14px;color:#1e293b;font-weight:700}
     .kpi-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
@@ -129,7 +129,8 @@
     .type-cell{font-weight:600;color:#475569}
     .resp-cell{font-weight:700;font-size:15px;text-transform:capitalize;padding:0 12px}
     .ovr-input{width:62px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:8px;text-align:center}
-    #rp_tableWrap{overflow:auto;border:1px solid #eee;border-radius:10px;margin:0 16px 12px;background:#fff;position:relative}
+    #rp_tableWrap,#lr_tableWrap{overflow:auto;border:1px solid #eee;border-radius:10px;margin:0 16px 12px;background:#fff;positi
+on:relative}
 
     .col-sat{ background:var(--sat) !important; }
     .col-sun{ background:var(--sun) !important; }
@@ -182,8 +183,17 @@
     .comment-popover .actions button.primary{background:#0ea5e9;border-color:#0284c7;color:#fff}
     .comment-popover .actions button.danger{background:#fee2e2;border-color:#fca5a5;color:#b91c1c}
 
-    #chartWrap{margin:12px 16px 16px;border:1px solid #eee;border-radius:10px;padding:10px;background:#fff}
-    #rp_detail{margin:0 16px 16px;border:1px dashed #e5e7eb;border-radius:10px;padding:10px;background:#fafafa}
+    #chartWrap,#lr_chartWrap{margin:12px 16px 16px;border:1px solid #eee;border-radius:10px;padding:10px;background:#fff}
+    #rp_detail,#lr_detail{margin:0 16px 16px;border:1px dashed #e5e7eb;border-radius:10px;padding:10px;background:#fafafa}
+    #rp_detail .detail-sections,#lr_detail .detail-sections{display:flex;flex-direction:column;gap:12px}
+    .detail-section{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px}
+    .detail-section.active{border-color:rgba(14,165,233,.6);box-shadow:0 0 0 2px rgba(14,165,233,.08)}
+    .detail-section h4{margin:0 0 8px;font-size:13px;color:#0f172a}
+    .detail-section table{width:100%}
+    .detail-section .muted{text-align:center}
+    #rp_todaySummary,#lr_todaySummary{margin:0 16px 16px;border:1px solid #e5e7eb;border-radius:10px;padding:12px;background:#fff}
+    #rp_todaySummary .today-sections,#lr_todaySummary .today-sections{display:flex;flex-direction:column;gap:12px}
+    #rp_todaySummary .today-section h4,#lr_todaySummary .today-section h4{margin:0 0 8px;color:#0f172a}
 
     /* Modal base */
     .modal-back{ position:fixed; inset:60px 0 0 0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.25); z-index:7000; }
@@ -202,7 +212,7 @@
     .flash { animation: flash 1s ease-out 1; }
 
     /* ===== Fix columnas fijas reporte ===== */
-    #rp_tableWrap{ position:relative; overflow:auto; }
+    #rp_tableWrap,#lr_tableWrap{ position:relative; overflow:auto; }
     table.report{ border-collapse:separate; border-spacing:0; table-layout:fixed; }
     table.report th, table.report td{ position:static; }
     th.sticky.l1, td.sticky.l1{ position:sticky; left:0; width:var(--resp-col-width); min-width:var(--resp-col-width); max-width:var(--resp-col-width); z-index:6; background:#fff; box-shadow:2px 0 0 rgba(15,23,42,.06); }
@@ -225,12 +235,29 @@
     #kpiLeaderList.compact.twocol{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
     #kpiLeaderList.compact.twocol .leader-row{ width:100%; }
     @media (max-width:700px){ #kpiLeaderList.compact.twocol{ grid-template-columns:1fr; } }
+    #kpiLeaderList.compact .leader-main,#lkpiLeaderList.compact .leader-main{display:flex;align-items:center;gap:8px}
+
+    #lr_kpiHeader.compact{ grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:8px; margin:6px 10px 10px; }
+    #lr_kpiHeader.compact .kpi-card{ padding:8px; border-radius:10px; }
+    #lr_kpiHeader.compact .kpi-card h4{ margin:0 0 6px; font-size:12px; color:#334155; }
+    #lr_kpiHeader.compact .kpi-metrics{ gap:8px; }
+    #lr_kpiHeader.compact .kpi-metric{ padding:6px; border-radius:8px; }
+    #lr_kpiHeader.compact .kpi-metric .m-label{ font-size:10px; letter-spacing:.3px; }
+    #lr_kpiHeader.compact .kpi-metric .m-val{ font-size:18px; font-weight:800; }
+    #lr_kpiHeader.compact .kpi-metric small{ font-size:10px; }
+    #lkpiLeaderList.compact{ gap:6px; }
+    #lkpiLeaderList.compact .leader-row{ padding:6px 8px; display:flex; align-items:center; justify-content:space-between; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; }
+    #lkpiLeaderList.compact .leader-name, #lkpiLeaderList.compact .leader-pct{ font-size:13px; font-weight:700; color:#0f172a; }
+    #lkpiLeaderList.compact .badge{ background:#e0f2fe; border:1px solid #bae6fd; border-radius:999px; padding:2px 8px; font-size:12px; color:#0c4a6e; }
+    #lkpiLeaderList.compact.twocol{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    #lkpiLeaderList.compact.twocol .leader-row{ width:100%; }
+    @media (max-width:700px){ #lkpiLeaderList.compact.twocol{ grid-template-columns:1fr; } }
 
     /* Hoy anclado correctamente */
     table.report th.today-col, table.report td.today-col{ position:relative!important; }
 
     /* Ocultar chips de responsables */
-    #rp_chips{ display:none!important; }
+    #rp_chips,#lr_chips{ display:none!important; }
 
     /* Centrado real del número (lectura) + pin más chico en edición */
     .plan-cell{ padding-right:0 }
@@ -257,6 +284,7 @@
 
     <div id="rightControls">
       <button class="ghost" id="btnReport">📊 Reporte</button>
+      <button class="ghost" id="btnLegalReport">⚖️ Rep. Legal</button>
       <button class="btn" id="btnExpedientes">📑 Expedientes</button>
       <select id="filterComunidad"><option value="">Comunidad (todas)</option></select>
       <select id="filterGrupo">
@@ -284,7 +312,7 @@
               <div class="label">Datos:</div>
               <span id="unionCount" class="badge"></span>
             </div>
-            <div><button id="btnEditCommon" class="btn-small">✏️ Editar :</button></div>
+            <div><button id="btnEditCommon" class="btn-small">✏️ Editar datos</button></div>
           </div>
 
           <!-- Lectura -->
@@ -298,8 +326,10 @@
               <div><div class="label">Condición</div><div id="cm_condicion" class="textblock"></div></div>
               <div><div class="label">Tipo</div><div id="cm_tipo" class="textblock"></div></div>
               <div><div class="label">Responsable</div><div id="cm_responsable" class="textblock"></div></div>
+              <div><div class="label">Responsable legal</div><div id="cm_resp_legal" class="textblock"></div></div>
               <div><div class="label">Grupo</div><div id="cm_grupo" class="textblock"></div></div>
               <div><div class="label">Fecha elaboración</div><div id="cm_fecha" class="textblock"></div></div>
+              <div><div class="label">Avance legal</div><div id="cm_avance_legal" class="textblock"></div></div>
             </div>
           </div>
 
@@ -324,6 +354,10 @@
                 <select id="ed_responsable"></select>
               </div>
               <div>
+                <div class="label">Responsable legal</div>
+                <select id="ed_resp_legal"></select>
+              </div>
+              <div>
                 <div class="label">Grupo</div>
                 <select id="ed_grupo">
                   <option value="">—</option>
@@ -333,6 +367,7 @@
                 </select>
               </div>
               <div><div class="label">Fecha elaboración</div><input id="ed_fecha" type="date"></div>
+              <div><div class="label">Avance legal</div><input id="ed_avance_legal" type="date"></div>
             </div>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
               <button id="btnCancelCommon" class="btn-small">Cancelar</button>
@@ -479,6 +514,85 @@
     <div id="chartWrap" style="display:none">
       <canvas id="rp_chart" height="336"></canvas>
     </div>
+
+    <div id="rp_todaySummary" class="block" style="display:none"></div>
+  </aside>
+
+  <!-- Drawer Reporte Legal -->
+  <aside id="legalReportDrawer" class="drawer" aria-hidden="true">
+    <div class="drawer-head">
+      <h3 style="margin:0">Reporte — Avance Legal</h3>
+      <button class="btn-small" id="lr_close">✕</button>
+    </div>
+
+    <div class="row">
+      <label>Desde: <input id="lr_start" type="date"></label>
+      <label>Hasta: <input id="lr_end" type="date"></label>
+      <button class="btn" id="lr_run">Generar</button>
+      <button class="ghost" id="lr_toggleEdit">✏️ Editar Planificado</button>
+      <span id="lr_status" class="muted"></span>
+    </div>
+
+    <div id="lr_chips" class="row" style="margin-top:-8px"></div>
+
+    <div id="lr_kpiHeader">
+      <div class="kpi-card">
+        <h4>Resumen general</h4>
+        <div class="kpi-metrics">
+          <div class="kpi-metric">
+            <div class="m-label">Planificado</div>
+            <div class="m-val" id="lkpiGeneralPlan">—</div>
+            <small id="lkpiGeneralPlanRange">—</small>
+          </div>
+          <div class="kpi-metric">
+            <div class="m-label">Avance</div>
+            <div class="m-val" id="lkpiGeneralDone">—</div>
+            <small id="lkpiGeneralDoneRange">—</small>
+          </div>
+          <div class="kpi-metric">
+            <div class="m-label">Cumplimiento</div>
+            <div class="m-val" id="lkpiGeneralPct">—</div>
+            <small>vs plan</small>
+          </div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <h4>Acumulado al corte</h4>
+        <div class="kpi-metrics">
+          <div class="kpi-metric">
+            <div class="m-label">Plan</div>
+            <div class="m-val" id="lkpiTodayPlan">—</div>
+            <small id="lkpiTodayRange">—</small>
+          </div>
+          <div class="kpi-metric">
+            <div class="m-label">Avance</div>
+            <div class="m-val" id="lkpiTodayDone">—</div>
+            <small>Corte seleccionado</small>
+          </div>
+          <div class="kpi-metric">
+            <div class="m-label">Avance</div>
+            <div class="m-val" id="lkpiTodayPct">—</div>
+            <small>vs plan</small>
+          </div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <h4>Líderes</h4>
+        <div id="lkpiLeaderList" class="kpi-leader-list"></div>
+      </div>
+    </div>
+
+    <div id="lr_tableWrap">
+      <table id="lr_table" class="report"></table>
+    </div>
+
+    <div id="lr_detail" style="display:none"></div>
+
+    <div id="lr_chartWrap" style="display:none">
+      <canvas id="lr_chart" height="336"></canvas>
+    </div>
+
+    <div id="lr_todaySummary" class="block" style="display:none"></div>
   </aside>
 
   <div id="commentPopover" class="comment-popover" role="dialog" aria-modal="false"></div>
@@ -606,8 +720,10 @@ async function showGroup(unirId){
     condicion:  c.condicion  || "",
     tipo:       normTipo(c.tipo),
     responsable:c.responsable || "",
+    resp_legal: c.resp_legal  || "",
     grupo:      c.grupo       || "",
-    fecha:      c.fecha_elab  || ""
+    fecha:      c.fecha_elab  || "",
+    avance_legal: c.avance_legal || ""
   };
 
   blockCommon.style.display = "";
@@ -622,8 +738,10 @@ async function showGroup(unirId){
   setText("cm_condicion", currentCommon.condicion);
   setText("cm_tipo", currentCommon.tipo || "predios");
   setText("cm_responsable", cap(currentCommon.responsable));
+  setText("cm_resp_legal", cap(currentCommon.resp_legal));
   setText("cm_grupo", currentCommon.grupo);
   setText("cm_fecha", currentCommon.fecha ? String(currentCommon.fecha).slice(0,10) : "");
+  setText("cm_avance_legal", currentCommon.avance_legal ? String(currentCommon.avance_legal).slice(0,10) : "");
 
   setVal("ed_mtc", currentCommon.codigo_mtc);
   setVal("ed_titular", currentCommon.titular);
@@ -633,8 +751,10 @@ async function showGroup(unirId){
   setVal("ed_condicion", currentCommon.condicion);
   setVal("ed_tipo", currentCommon.tipo || "predios");
   populateResponsableSelect(currentCommon.responsable);
+  populateRespLegalSelect(currentCommon.resp_legal);
   setVal("ed_grupo", currentCommon.grupo);
   document.getElementById("ed_fecha").value = currentCommon.fecha ? String(currentCommon.fecha).slice(0,10) : "";
+  document.getElementById("ed_avance_legal").value = currentCommon.avance_legal ? String(currentCommon.avance_legal).slice(0,10) : "";
 
   listAreas.innerHTML = "";
   (data||[]).forEach(p=>{
@@ -671,7 +791,11 @@ function setCommonMode(edit){
   commonEdit.style.display = edit ? "" : "none";
   btnEditCommon.style.display = edit ? "none" : "";
 }
-btnEditCommon.addEventListener("click", ()=> { populateResponsableSelect(currentCommon?.responsable||""); setCommonMode(true); });
+btnEditCommon.addEventListener("click", ()=> {
+  populateResponsableSelect(currentCommon?.responsable||"");
+  populateRespLegalSelect(currentCommon?.resp_legal||"");
+  setCommonMode(true);
+});
 btnCancelCommon.addEventListener("click", ()=> {
   if(currentCommon){
     setVal("ed_mtc", currentCommon.codigo_mtc);
@@ -682,8 +806,10 @@ btnCancelCommon.addEventListener("click", ()=> {
     setVal("ed_condicion", currentCommon.condicion);
     setVal("ed_tipo", currentCommon.tipo || "predios");
     populateResponsableSelect(currentCommon.responsable);
+    populateRespLegalSelect(currentCommon.resp_legal);
     setVal("ed_grupo", currentCommon.grupo);
     document.getElementById("ed_fecha").value = currentCommon.fecha ? String(currentCommon.fecha).slice(0,10) : "";
+    document.getElementById("ed_avance_legal").value = currentCommon.avance_legal ? String(currentCommon.avance_legal).slice(0,10) : "";
   }
   setCommonMode(false);
 });
@@ -697,8 +823,10 @@ btnSaveCommon.addEventListener("click", async ()=>{
     condicion:   valOrNull("ed_condicion"),
     tipo:        normTipo(document.getElementById("ed_tipo").value),
     responsable: valOrNull("ed_responsable"),
+    resp_legal:  valOrNull("ed_resp_legal"),
     grupo:       valOrNull("ed_grupo"),
-    fecha_elab:  (document.getElementById("ed_fecha").value || null)
+    fecha_elab:  (document.getElementById("ed_fecha").value || null),
+    avance_legal:(document.getElementById("ed_avance_legal").value || null)
   };
   const { error } = await client.from("cod_pred").update(payload).eq("unir", currentUnirId);
   if(error){ alert("❌ Error al guardar comunes: "+error.message); return; }
@@ -789,17 +917,40 @@ async function applyFilters(){
 }
 
 /** ====== RESPONSABLES ====== **/
-let RESPONSABLES = [];
+let RESPONSABLES = { tecnico: [], legal: [] };
 async function fetchResponsables(){
-  const { data, error } = await client.from("cod_pred").select("responsable").not("responsable","is",null);
-  if(error) { console.warn(error.message); RESPONSABLES=[]; return; }
-  const set = new Set((data||[]).map(r => (r.responsable||"").toString().trim().toLowerCase()).filter(Boolean));
-  RESPONSABLES = [...set].sort();
+  const { data, error } = await client.from("cod_pred").select("responsable,resp_legal").not("geom","is",null);
+  if(error){ console.warn(error.message); RESPONSABLES = { tecnico: [], legal: [] }; return; }
+  const techSet = new Set();
+  const legalSet = new Set();
+  (data||[]).forEach(r=>{
+    const tech = (r.responsable||"").toString().trim().toLowerCase();
+    const legal = (r.resp_legal||"").toString().trim().toLowerCase();
+    if(tech) techSet.add(tech);
+    if(legal) legalSet.add(legal);
+  });
+  RESPONSABLES = {
+    tecnico: [...techSet].sort(),
+    legal: [...legalSet].sort()
+  };
 }
 function populateResponsableSelect(selected){
   const sel = document.getElementById("ed_responsable");
-  sel.innerHTML = '<option value="">—</option>' + RESPONSABLES.map(n=>`<option value="${n}">${cap(n)}</option>`).join("");
-  sel.value = (selected||"").toString().trim().toLowerCase();
+  if(!sel) return;
+  const normalized = (selected||"").toString().trim().toLowerCase();
+  const options = RESPONSABLES.tecnico.slice();
+  if(normalized && !options.includes(normalized)) options.unshift(normalized);
+  sel.innerHTML = '<option value="">—</option>' + options.map(n=>`<option value="${n}">${cap(n)}</option>`).join("");
+  sel.value = normalized;
+}
+function populateRespLegalSelect(selected){
+  const sel = document.getElementById("ed_resp_legal");
+  if(!sel) return;
+  const normalized = (selected||"").toString().trim().toLowerCase();
+  const options = RESPONSABLES.legal.slice();
+  if(normalized && !options.includes(normalized)) options.unshift(normalized);
+  sel.innerHTML = '<option value="">—</option>' + options.map(n=>`<option value="${n}">${cap(n)}</option>`).join("");
+  sel.value = normalized;
 }
 
 /** ====== MODAL ÁREA ====== **/
@@ -877,7 +1028,7 @@ function defaultExpDates(){
 }
 function hydrateExpSelects(){
   // Responsables
-  expResp.innerHTML = '<option value="">Todos</option>' + RESPONSABLES.map(n=>`<option value="${n}">${cap(n)}</option>`).join('');
+  expResp.innerHTML = '<option value="">Todos</option>' + RESPONSABLES.tecnico.map(n=>`<option value="${n}">${cap(n)}</option>`).join('');
 }
 
 async function runExpedientes(){
@@ -995,73 +1146,646 @@ async function focusExpediente(unir, cod){
   }
 }
 
-/** ====== DRAWER REPORTE ====== **/
-const drawer   = document.getElementById("reportDrawer");
-const btnOpen  = document.getElementById("btnReport");
-const btnClose = document.getElementById("rp_close");
-const rpStart  = document.getElementById("rp_start");
-const rpEnd    = document.getElementById("rp_end");
-const rpRun    = document.getElementById("rp_run");
-const rpStatus = document.getElementById("rp_status");
-const rpChips  = document.getElementById("rp_chips");
-const rpTable  = document.getElementById("rp_table");
-const rpTableWrap = document.getElementById("rp_tableWrap");
-const rpDetail = document.getElementById("rp_detail");
-const rpToggle = document.getElementById("rp_toggleEdit");
-const EDIT_PLAN_PASSWORD = "assa$2025";
-let rpChart = null;
-let rpEditMode = false;
+/** ====== REPORTES ====== **/
+const REPORT_MODULES = {};
+let activeCommentModule = null;
 const commentPopoverEl = document.getElementById("commentPopover");
 let commentPopoverState = null;
 
-btnOpen.addEventListener("click", openReport);
-btnClose.addEventListener("click", closeReport);
+class ReportModule {
+  constructor(config){
+    this.config = config;
+    this.drawer = document.getElementById(config.drawerId);
+    this.openBtn = document.getElementById(config.openBtnId);
+    this.closeBtn = document.getElementById(config.closeBtnId);
+    this.startInput = document.getElementById(config.startInputId);
+    this.endInput = document.getElementById(config.endInputId);
+    this.runBtn = document.getElementById(config.runBtnId);
+    this.todayBtn = config.todayButtonId ? document.getElementById(config.todayButtonId) : null;
+    this.toggleBtn = config.toggleBtnId ? document.getElementById(config.toggleBtnId) : null;
+    this.statusEl = config.statusId ? document.getElementById(config.statusId) : null;
+    this.chipsContainer = config.chipsContainerId ? document.getElementById(config.chipsContainerId) : null;
+    this.table = document.getElementById(config.tableId);
+    this.tableWrap = document.getElementById(config.tableWrapId);
+    this.detailEl = config.detailId ? document.getElementById(config.detailId) : null;
+    this.todaySummaryEl = config.todaySummaryId ? document.getElementById(config.todaySummaryId) : null;
+    this.chartWrap = config.chartWrapId ? document.getElementById(config.chartWrapId) : null;
+    this.chartCanvas = config.chartCanvasId ? document.getElementById(config.chartCanvasId) : null;
+    this.kpi = {
+      header: config.kpi?.headerId ? document.getElementById(config.kpi.headerId) : null,
+      generalPlan: config.kpi?.generalPlanId ? document.getElementById(config.kpi.generalPlanId) : null,
+      generalPlanRange: config.kpi?.generalPlanRangeId ? document.getElementById(config.kpi.generalPlanRangeId) : null,
+      generalDone: config.kpi?.generalDoneId ? document.getElementById(config.kpi.generalDoneId) : null,
+      generalDoneRange: config.kpi?.generalDoneRangeId ? document.getElementById(config.kpi.generalDoneRangeId) : null,
+      generalPct: config.kpi?.generalPctId ? document.getElementById(config.kpi.generalPctId) : null,
+      todayPlan: config.kpi?.todayPlanId ? document.getElementById(config.kpi.todayPlanId) : null,
+      todayDone: config.kpi?.todayDoneId ? document.getElementById(config.kpi.todayDoneId) : null,
+      todayPct: config.kpi?.todayPctId ? document.getElementById(config.kpi.todayPctId) : null,
+      todayRange: config.kpi?.todayRangeId ? document.getElementById(config.kpi.todayRangeId) : null,
+      leadersList: config.kpi?.leadersListId ? document.getElementById(config.kpi.leadersListId) : null
+    };
 
-function openReport(){
-  defaultReportDates();
-  runReport();
-  drawer.classList.add("open");
-  drawer.setAttribute("aria-hidden","false");
-}
-function closeReport(){
-  drawer.classList.remove("open");
-  drawer.setAttribute("aria-hidden","true");
-  closeCommentPopover();
-}
-rpRun.addEventListener("click", runReport);
-rpToggle.addEventListener("click", ()=>{
-  if(!rpEditMode){
-    const input = prompt("Ingresa la contraseña para editar el planificado:");
-    if(input === null) return;
-    if(input !== EDIT_PLAN_PASSWORD){
-      alert("Contraseña incorrecta");
+    this.chart = null;
+    this.editMode = false;
+    this.planCounts = {};
+    this.planComments = {};
+    this.cellMapDone = new Map();
+    this.resps = [];
+    this.dMeta = [];
+    this.dateKeys = [];
+    this.activeDetailDay = null;
+
+    this.openBtn?.addEventListener('click', ()=>this.open());
+    this.closeBtn?.addEventListener('click', ()=>this.close());
+    this.runBtn?.addEventListener('click', ()=>this.run());
+    this.todayBtn?.addEventListener('click', ()=>this.runToday());
+    this.toggleBtn?.addEventListener('click', ()=>this.toggleEdit());
+
+    if(this.detailEl){
+      this.detailEl.addEventListener('click', async (e)=>{
+        const btn = e.target.closest('.code-link');
+        if(!btn) return;
+        await selectFromReport(btn.dataset.unir, btn.dataset.code);
+      });
+    }
+    if(this.todaySummaryEl){
+      this.todaySummaryEl.addEventListener('click', async (e)=>{
+        const btn = e.target.closest('.code-link');
+        if(!btn) return;
+        await selectFromReport(btn.dataset.unir, btn.dataset.code);
+      });
+    }
+
+    REPORT_MODULES[config.key] = this;
+  }
+
+  defaultDates(){
+    if(typeof this.config.defaultRange === 'function'){
+      const range = this.config.defaultRange();
+      if(range?.start) this.startInput.value = range.start;
+      if(range?.end) this.endInput.value = range.end;
       return;
     }
+    const Y = new Date().getFullYear();
+    this.startInput.value = `${Y}-09-02`;
+    this.endInput.value = `${Y}-10-25`;
   }
-  rpEditMode = !rpEditMode;
-  rpToggle.textContent = rpEditMode ? "✅ Terminar edición" : "✏️ Editar Planificado";
-  runReport();
-});
 
-function defaultReportDates(){
-  const Y = new Date().getFullYear();
-  rpStart.value = `${Y}-09-02`;
-  rpEnd.value   = `${Y}-10-25`;
+  setStatus(msg){ if(this.statusEl) this.statusEl.textContent = msg || ''; }
+
+  open(){
+    this.defaultDates();
+    this.run();
+    if(this.drawer){
+      this.drawer.classList.add('open');
+      this.drawer.setAttribute('aria-hidden','false');
+    }
+  }
+
+  close(){
+    if(this.drawer){
+      this.drawer.classList.remove('open');
+      this.drawer.setAttribute('aria-hidden','true');
+    }
+    if(activeCommentModule === this) closeCommentPopover();
+  }
+
+  runToday(){
+    const today = ymdFromDateLocal(new Date());
+    if(this.startInput) this.startInput.value = today;
+    if(this.endInput) this.endInput.value = today;
+    this.run();
+  }
+
+  selectedResp(){
+    const set = new Set();
+    if(!this.chipsContainer) return set;
+    this.chipsContainer.querySelectorAll('.rp-resp:checked').forEach(cb=> set.add(cb.value));
+    return set;
+  }
+
+  async fetchPlan(start, end){
+    if(!this.config.planTable || !this.config.planRespField) return [];
+    const { data, error } = await client
+      .from(this.config.planTable)
+      .select(`${this.config.planRespField},fecha,valor,coment`)
+      .gte('fecha', start)
+      .lte('fecha', end);
+    if(error){
+      console.warn(`${this.config.planTable}:`, error.message);
+      return [];
+    }
+    return data||[];
+  }
+
+  async savePlanEntry(resp, fecha, patch = {}){
+    if(!this.config.planTable || !this.config.planRespField) return;
+    const dow = parseYmd(fecha).getDay();
+    const hasValor = Object.prototype.hasOwnProperty.call(patch, 'valor');
+    if(hasValor && (dow===0 || dow===6)) return;
+    const payload = { [this.config.planRespField]: resp, fecha, ...patch };
+    if(!hasValor){
+      const current = this.planCounts?.[resp]?.[fecha];
+      if(typeof current === 'number') payload.valor = current;
+    }else{
+      payload.valor = Number(payload.valor)||0;
+    }
+    const { error } = await client
+      .from(this.config.planTable)
+      .upsert(payload, { onConflict: this.config.planOnConflict || `${this.config.planRespField},fecha` });
+    if(error) throw error;
+  }
+
+  async run(){
+    const start = this.startInput?.value;
+    const end = this.endInput?.value;
+    if(!start || !end){ alert('Selecciona fechas'); return; }
+    const allowed = this.selectedResp();
+
+    this.setStatus('Cargando…');
+    if(activeCommentModule === this) closeCommentPopover();
+    if(this.detailEl){ this.detailEl.style.display='none'; this.detailEl.innerHTML=''; }
+    if(this.todaySummaryEl){ this.todaySummaryEl.style.display='none'; this.todaySummaryEl.innerHTML=''; }
+
+    const year = parseYmd(start).getFullYear();
+    const generalStart = `${year}-09-01`;
+    const generalEnd = `${year}-10-25`;
+
+    const selectFields = `unir,cod_prel,codigo_mtc,comunidad,${this.config.respField},${this.config.dateField}`;
+
+    const rangeQuery = client
+      .from('cod_pred')
+      .select(selectFields)
+      .not(this.config.dateField,'is',null)
+      .gte(this.config.dateField, start)
+      .lte(this.config.dateField, end);
+
+    const generalQuery = client
+      .from('cod_pred')
+      .select(selectFields)
+      .not(this.config.dateField,'is',null)
+      .gte(this.config.dateField, generalStart)
+      .lte(this.config.dateField, generalEnd);
+
+    const [rangeResp, generalResp, planRows, planRowsGeneral] = await Promise.all([
+      rangeQuery,
+      generalQuery,
+      this.fetchPlan(start, end),
+      this.fetchPlan(generalStart, generalEnd)
+    ]);
+
+    if(rangeResp.error){ this.setStatus(`Error: ${rangeResp.error.message}`); return; }
+    if(generalResp.error){ this.setStatus(`Error: ${generalResp.error.message}`); return; }
+
+    const groups = buildGroupsMap(rangeResp.data||[], allowed, this.config.respField, this.config.dateField);
+    const generalGroups = buildGroupsMap(generalResp.data||[], allowed, this.config.respField, this.config.dateField);
+
+    const dFrom = parseYmd(start), dTo = parseYmd(end);
+    const days = buildDays(dFrom, dTo);
+    const dMeta = days.map(d => ({ key: ymdFromDateLocal(d), dow: d.getDay() }));
+    const dKeys = dMeta.map(d => d.key);
+
+    const resps = [...new Set([...groups.values()].map(g=>g.responsable))].filter(Boolean).sort();
+
+    const doneCounts = {};
+    const planCounts = {};
+    const planComments = {};
+    resps.forEach(r=>{
+      doneCounts[r] = Object.fromEntries(dKeys.map(k=>[k,0]));
+      planCounts[r] = Object.fromEntries(dKeys.map(k=>[k,0]));
+      planComments[r] = Object.fromEntries(dKeys.map(k=>[k,null]));
+    });
+
+    const cellMapDone = new Map();
+    groups.forEach(g=>{
+      const r = g.responsable;
+      const k = g.fecha;
+      if(!r || !k || !(k in (doneCounts[r]||{}))) return;
+      doneCounts[r][k] += 1;
+      const ck = `${r}|${k}`;
+      if(!cellMapDone.has(ck)) cellMapDone.set(ck, []);
+      cellMapDone.get(ck).push({ comunidad: g.comunidad, codigo_mtc: g.codigo_mtc, unirId: g.unirId, cods: g.cods });
+    });
+
+    (planRows||[]).forEach(p=>{
+      const resp = normResp(p[this.config.planRespField]);
+      const key = (p.fecha||'').toString().slice(0,10);
+      if(resps.includes(resp) && dKeys.includes(key)){
+        planCounts[resp][key] = Number(p.valor)||0;
+        planComments[resp][key] = p.coment || null;
+      }
+    });
+
+    this.planCounts = planCounts;
+    this.planComments = planComments;
+    this.cellMapDone = cellMapDone;
+    this.resps = resps;
+    this.dMeta = dMeta;
+    this.dateKeys = dKeys;
+
+    const todayKey = dateKey(new Date());
+    const planDaily = dMeta.map(({key})=> resps.reduce((acc,r)=> acc + (planCounts[r]?.[key]||0), 0));
+    const doneDaily = dMeta.map(({key})=> resps.reduce((acc,r)=> acc + (doneCounts[r]?.[key]||0), 0));
+
+    let todayIdx = dKeys.indexOf(todayKey);
+    if(todayIdx === -1){
+      todayIdx = -1;
+      dKeys.forEach((k,i)=>{ if(k<=todayKey) todayIdx = i; });
+    }
+
+    const planToToday = todayIdx >=0 ? planDaily.slice(0, todayIdx+1).reduce((acc,v)=>acc+v,0) : 0;
+    const doneToToday = todayIdx >=0 ? doneDaily.slice(0, todayIdx+1).reduce((acc,v)=>acc+v,0) : 0;
+    const todayPct = planToToday ? Math.round((doneToToday/planToToday)*100) : 0;
+
+    const cutoffKey = todayIdx >=0 ? dKeys[todayIdx] : (todayKey < start ? start : end);
+    let cutoffSuffix = '';
+    if(todayIdx === -1 && todayKey < start){ cutoffSuffix = ' (hoy antes del rango)'; }
+    else if(dKeys.length && todayIdx === dKeys.length-1 && todayKey > end){ cutoffSuffix = ' (hoy después del rango)'; }
+
+    const lastIdxForLeader = todayIdx >=0 ? todayIdx : (todayKey < start ? -1 : dMeta.length - 1);
+    const leaders = resps.map(r=>{
+      let planAcc = 0, doneAcc = 0;
+      if(lastIdxForLeader >= 0){
+        for(let i=0; i<=lastIdxForLeader; i++){
+          const key = dMeta[i].key;
+          planAcc += planCounts[r][key] || 0;
+          doneAcc += doneCounts[r][key] || 0;
+        }
+      }
+      const pct = planAcc ? Math.round((doneAcc/planAcc)*100) : (doneAcc>0 ? 100 : 0);
+      return { name: cap(r), plan: planAcc, done: doneAcc, pct };
+    }).sort((a,b)=> b.done - a.done);
+
+    const generalPlanTotal = (planRowsGeneral||[]).reduce((acc,p)=>{
+      const resp = normResp(p[this.config.planRespField]);
+      if(allowed.size && !allowed.has(resp)) return acc;
+      return acc + (Number(p.valor)||0);
+    }, 0);
+    const generalDoneTotal = generalGroups.size;
+    const generalPct = generalPlanTotal ? Math.round((generalDoneTotal/generalPlanTotal)*100) : 0;
+
+    this.renderHeaderKpis({
+      generalPlan: generalPlanTotal,
+      generalDone: generalDoneTotal,
+      generalPct,
+      generalRange: `${generalStart} → ${generalEnd}`,
+      todayPlan: planToToday,
+      todayDone: doneToToday,
+      todayPct,
+      todayRange: `${start} → ${cutoffKey}${cutoffSuffix}`,
+      leaders
+    });
+
+    this.renderTable({ dMeta, todayKey, todayIdx, doneCounts, planCounts, planComments });
+
+    let nextDetailDay = null;
+    if(this.activeDetailDay && dKeys.includes(this.activeDetailDay)){
+      nextDetailDay = this.activeDetailDay;
+    }else if(dKeys.includes(todayKey)){
+      nextDetailDay = todayKey;
+    }else if(dKeys.length){
+      nextDetailDay = dKeys[dKeys.length - 1];
+    }
+    this.renderDailyDetail(nextDetailDay);
+
+    this.renderCurve(dMeta, planDaily, doneDaily, todayIdx);
+    this.renderTodaySummary(start, end, todayKey, cellMapDone);
+
+    this.setStatus('Listo.');
+  }
+
+  renderHeaderKpis({ generalPlan, generalDone, generalPct, generalRange, todayPlan, todayDone, todayPct, todayRange, leaders }){
+    const fmt = (n)=> numberFormatter.format(Math.round(n||0));
+    this.kpi.header?.classList.add('compact');
+    if(this.kpi.generalPlan) this.kpi.generalPlan.textContent = fmt(generalPlan);
+    if(this.kpi.generalPlanRange) this.kpi.generalPlanRange.textContent = generalRange;
+    if(this.kpi.generalDone) this.kpi.generalDone.textContent = fmt(generalDone);
+    if(this.kpi.generalDoneRange) this.kpi.generalDoneRange.textContent = generalRange;
+    if(this.kpi.generalPct) this.kpi.generalPct.textContent = `${Math.round(generalPct||0)}%`;
+    if(this.kpi.todayPlan) this.kpi.todayPlan.textContent = fmt(todayPlan);
+    if(this.kpi.todayDone) this.kpi.todayDone.textContent = fmt(todayDone);
+    if(this.kpi.todayPct) this.kpi.todayPct.textContent = `${Math.round(todayPct||0)}%`;
+    if(this.kpi.todayRange) this.kpi.todayRange.textContent = todayRange;
+    if(this.kpi.leadersList){
+      this.kpi.leadersList.classList.add('compact','twocol');
+      if(!leaders || leaders.length === 0){
+        this.kpi.leadersList.innerHTML = '<div class="muted">Sin responsables en el rango.</div>';
+      }else{
+        this.kpi.leadersList.innerHTML = leaders.map(l=>{
+          const pct = Math.round(l.pct || 0);
+          const doneLabel = fmt(l.done);
+          const planLabel = l.plan > 0 ? fmt(l.plan) : '—';
+          return `
+            <div class="leader-row">
+              <div class="leader-main">
+                <span class="leader-name">${esc(l.name)}</span>
+                <span class="badge">${doneLabel} / ${planLabel}</span>
+              </div>
+              <span class="leader-pct">${pct}%</span>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+  }
+
+  renderTable({ dMeta, todayKey, todayIdx, doneCounts, planCounts, planComments }){
+    if(!this.table) return;
+    const moduleKey = this.config.key;
+    const resps = this.resps;
+
+    let html = '<tr>';
+    html += '<th class="sticky l1">RESPONSABLE</th>';
+    html += '<th class="sticky l2">TIPO</th>';
+    dMeta.forEach(({key,dow})=>{
+      const d = parseYmd(key);
+      const clsBase = dow===0 ? 'col-sun' : (dow===6 ? 'col-sat' : '');
+      const clsToday = key===todayKey ? 'today-col' : '';
+      const cls = `${clsBase} ${clsToday}`.trim();
+      html += `<th class="${cls}">${String(d.getDate()).padStart(2,'0')}<div class="muted">${['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][dow]}</div></th>`;
+    });
+    html += '<th>Total</th></tr>';
+
+    if(resps.length === 0){
+      html += `<tr><td colspan="${dMeta.length + 3}" class="muted" style="text-align:center;padding:16px 0">Sin responsables en el rango.</td></tr>`;
+      this.table.innerHTML = html;
+      this.scrollToToday(-1);
+      return;
+    }
+
+    resps.forEach(r=>{
+      const respLabel = esc(cap(r));
+      const commentCols = new Map();
+
+      let rowPlan = 0;
+      html += '<tr class="plan-row">';
+      html += `<td class="sticky l1" rowspan="2"><div class="resp-cell">${respLabel}</div></td>`;
+      html += `<td class="sticky l2 type-cell">${esc(this.config.planLabel)}</td>`;
+      dMeta.forEach(({key,dow})=>{
+        const val = planCounts[r][key] || 0; rowPlan += val;
+        const comment = planComments[r][key] || '';
+        const trimmed = comment.trim().toLowerCase();
+        const isBajada = trimmed === 'bajada';
+        const hasComment = !!comment;
+        if(hasComment) commentCols.set(key, { isBajada });
+        const classes = [
+          dow===0 ? 'col-sun' : (dow===6 ? 'col-sat' : ''),
+          key===todayKey ? 'today-col' : '',
+          hasComment ? `comment-cell${isBajada ? ' comment-bajada' : ''}` : ''
+        ].filter(Boolean).join(' ');
+        const showPin = this.editMode;
+        const pinClasses = ['comment-pin'];
+        if(hasComment) pinClasses.push('has-comment');
+        else if(this.editMode) pinClasses.push('empty');
+        if(isBajada) pinClasses.push('bajada');
+        const ariaLabel = hasComment ? (this.editMode ? 'Editar comentario' : 'Ver comentario') : 'Agregar comentario';
+        const pinHtml = showPin ? `<button type="button" class="${pinClasses.join(' ')}" data-module="${moduleKey}" data-resp="${r}" data-date="${key}" aria-label="${esc(ariaLabel)}"></button>` : '';
+
+        if(this.editMode){
+          const disabled = (dow===0 || dow===6) ? 'disabled' : '';
+          html += `<td class="${classes}"><div class="plan-cell has-pin"><input class="ovr-input" data-module="${moduleKey}" data-resp="${r}" data-date="${key}" type="number" min="0" value="${val}" ${disabled}>${pinHtml}</div></td>`;
+        }else{
+          html += `<td class="${classes}"><div class="plan-cell readonly"><span class="value" data-open-comment="1" data-module="${moduleKey}" data-resp="${r}" data-date="${key}">${val}</span></div></td>`;
+        }
+      });
+      html += `<td><b>${rowPlan}</b></td>`;
+      html += '</tr>';
+
+      let rowDone = 0;
+      html += '<tr class="done-row">';
+      html += `<td class="sticky l2 type-cell">${esc(this.config.doneLabel)}</td>`;
+      dMeta.forEach(({key,dow})=>{
+        const n = doneCounts[r][key] || 0; rowDone += n;
+        const commentMeta = commentCols.get(key);
+        const hasComment = !!commentMeta;
+        const isBajada = commentMeta?.isBajada;
+        const classes = [
+          dow===0 ? 'col-sun' : (dow===6 ? 'col-sat' : ''),
+          key===todayKey ? 'today-col' : '',
+          hasComment ? `comment-cell comment-linked${isBajada ? ' comment-bajada' : ''}` : ''
+        ].filter(Boolean).join(' ');
+        if(n>0){
+          html += `<td class="${classes} clickable" onclick="openReportCell('${moduleKey}','${r}','${key}')"><b>${n}</b></td>`;
+        }else{
+          html += `<td class="${classes} muted">0</td>`;
+        }
+      });
+      html += `<td><b>${rowDone}</b></td>`;
+      html += '</tr>';
+    });
+
+    this.table.innerHTML = html;
+    this.attachTableEvents();
+    this.scrollToToday(todayIdx);
+  }
+
+  attachTableEvents(){
+    if(!this.table) return;
+    this.table.querySelectorAll('.plan-cell.readonly [data-open-comment="1"]').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const resp = el.getAttribute('data-resp');
+        const fecha = el.getAttribute('data-date');
+        const current = this.planComments?.[resp]?.[fecha] || '';
+        openCommentPopover(this, { resp, fecha, anchor: el, comment: current, editable: this.editMode });
+      });
+    });
+    this.table.querySelectorAll('.comment-pin').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const resp = btn.getAttribute('data-resp');
+        const fecha = btn.getAttribute('data-date');
+        const current = this.planComments?.[resp]?.[fecha] || '';
+        openCommentPopover(this, { resp, fecha, anchor: btn, comment: current, editable: this.editMode });
+      });
+    });
+    this.table.querySelectorAll('.ovr-input:not([disabled])').forEach(inp=>{
+      inp.addEventListener('change', async (e)=>{
+        const resp = e.target.getAttribute('data-resp');
+        const fecha = e.target.getAttribute('data-date');
+        const valor = Number(e.target.value)||0;
+        try{
+          await this.savePlanEntry(resp, fecha, { valor });
+          this.setStatus('Planificado guardado ✓');
+          await this.run();
+        }catch(err){
+          console.error(err);
+          this.setStatus('Error al guardar planificado');
+        }
+      });
+    });
+  }
+
+  scrollToToday(idx){
+    if(idx == null || idx < 0) return;
+    if(!this.tableWrap || !this.table) return;
+    requestAnimationFrame(()=>{
+      const headerRow = this.table.querySelector('tr');
+      if(!headerRow) return;
+      const target = headerRow.querySelector(`th:nth-child(${idx + 3})`);
+      if(!target) return;
+      const desired = target.offsetLeft - (this.tableWrap.clientWidth/2) + (target.offsetWidth/2);
+      const left = desired < 0 ? 0 : desired;
+      this.tableWrap.scrollTo({ left, behavior: 'smooth' });
+    });
+  }
+
+  renderCurve(dMeta, planDaily, doneDaily, todayIdx){
+    if(!this.chartWrap || !this.chartCanvas){
+      if(this.chart){ this.chart.destroy(); this.chart=null; }
+      return;
+    }
+    if(!dMeta.length){
+      this.chartWrap.style.display = 'none';
+      if(this.chart){ this.chart.destroy(); this.chart=null; }
+      return;
+    }
+    this.chartWrap.style.display = 'block';
+    const ctx = this.chartCanvas.getContext('2d');
+    if(this.chart) this.chart.destroy();
+    if(!todayPluginRegistered){ Chart.register(TodayLinePlugin); todayPluginRegistered = true; }
+    const labels = dMeta.map(({key})=>{
+      const d = parseYmd(key);
+      return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+    });
+    const planCum = [];
+    planDaily.reduce((acc,v)=>{ const next=acc+v; planCum.push(next); return next; },0);
+    const doneCum = [];
+    doneDaily.reduce((acc,v,idx)=>{
+      if(todayIdx>=0 && idx>todayIdx){ doneCum.push(null); return acc; }
+      const next=acc+v; doneCum.push(next); return next;
+    },0);
+    this.chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: `${this.config.planLabel} acumulado`, data: planCum, tension: 0.3, borderColor: '#0ea5e9', backgroundColor: 'rgba(14,165,233,.12)', fill: false, pointRadius: 3 },
+          { label: `${this.config.doneLabel} acumulado`, data: doneCum, tension: 0.3, borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,.12)', fill: false, pointRadius: 3, spanGaps: true }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'top' }, tooltip: { enabled: true }, todayLine: { index: todayIdx } },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    });
+  }
+
+  renderDetail(resp, ymd){
+    this.renderDailyDetail(ymd, resp);
+  }
+
+  renderDailyDetail(ymd, primaryResp = null){
+    if(!this.detailEl){
+      this.activeDetailDay = ymd || null;
+      return;
+    }
+    if(!ymd){
+      this.detailEl.innerHTML = '';
+      this.detailEl.style.display = 'none';
+      this.activeDetailDay = null;
+      return;
+    }
+
+    this.activeDetailDay = ymd;
+    const resps = Array.isArray(this.resps) ? [...this.resps] : [];
+    if(primaryResp && resps.includes(primaryResp)){
+      resps.splice(resps.indexOf(primaryResp), 1);
+      resps.unshift(primaryResp);
+    }
+
+    const parsed = parseYmd(ymd);
+    const isValid = !Number.isNaN(parsed?.getTime?.());
+    const dateLabel = isValid
+      ? `${String(parsed.getDate()).padStart(2,'0')}/${String(parsed.getMonth()+1).padStart(2,'0')}/${parsed.getFullYear()}`
+      : ymd;
+
+    const totalDay = resps.reduce((acc, r)=>{
+      const list = this.cellMapDone?.get(`${r}|${ymd}`) || [];
+      return acc + list.length;
+    }, 0);
+    const totalLabel = `${totalDay} ${totalDay === 1 ? 'expediente' : 'expedientes'}`;
+
+    let sections = '';
+    if(resps.length === 0){
+      sections = '<div class="detail-section"><h4>Sin responsables</h4><div class="muted">No hay responsables en el rango seleccionado.</div></div>';
+    }else{
+      sections = resps.map(r=>{
+        const list = this.cellMapDone?.get(`${r}|${ymd}`) || [];
+        const rows = list.map(g=>{
+          const codes = g.cods.map(c=>`<button class="code-link" data-code="${esc(c)}" data-unir="${g.unirId}">${esc(c)}</button>`).join('');
+          return `<tr><td>${esc(g.comunidad)}</td><td>${esc(g.codigo_mtc)}</td><td style="text-align:left">${codes}</td></tr>`;
+        }).join('');
+        const rowBody = rows || '<tr><td colspan="3" class="muted">Sin expedientes</td></tr>';
+        const count = list.length;
+        const countLabel = `${count} ${count === 1 ? 'expediente' : 'expedientes'}`;
+        const classes = ['detail-section'];
+        if(primaryResp && r === primaryResp) classes.push('active');
+        return `<div class="${classes.join(' ')}">
+          <h4>${esc(cap(r))} · ${countLabel}</h4>
+          <div style="overflow:auto"><table class="report">
+            <thead><tr><th>Comunidad</th><th>Código MTC</th><th>cod_prel (grupo UNIR)</th></tr></thead>
+            <tbody>${rowBody}</tbody>
+          </table></div>
+        </div>`;
+      }).join('');
+    }
+
+    this.detailEl.innerHTML = `
+      <div class="label">${esc(this.config.detailTitlePrefix || 'Detalle')} — ${dateLabel} · ${totalLabel}</div>
+      <div class="detail-sections">${sections}</div>`;
+    this.detailEl.style.display = 'block';
+  }
+
+  renderTodaySummary(start, end, todayKey, cellMapDone){
+    if(!this.todaySummaryEl) return;
+    if(start !== end || start !== todayKey){
+      this.todaySummaryEl.style.display = 'none';
+      this.todaySummaryEl.innerHTML = '';
+      return;
+    }
+    const sections = this.resps.map(r=>({
+      resp: r,
+      list: cellMapDone.get(`${r}|${todayKey}`) || []
+    })).filter(item => item.list.length > 0);
+
+    if(sections.length === 0){
+      this.todaySummaryEl.innerHTML = '<div class="muted">Sin expedientes con avance hoy.</div>';
+      this.todaySummaryEl.style.display = 'block';
+      return;
+    }
+
+    const body = sections.map(item=>{
+      const rows = item.list.map(g=>{
+        const codes = g.cods.map(c=>`<button class="code-link" data-code="${esc(c)}" data-unir="${g.unirId}">${esc(c)}</button>`).join('');
+        return `<tr><td>${esc(g.comunidad)}</td><td>${esc(g.codigo_mtc)}</td><td style="text-align:left">${codes}</td></tr>`;
+      }).join('');
+      return `<div class="today-section"><h4>${esc(cap(item.resp))}</h4><table class="report" style="width:100%"><thead><tr><th>Comunidad</th><th>Código MTC</th><th>cod_prel</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    }).join('');
+
+    const suffix = this.config.todaySummaryTitle ? ` ${esc(this.config.todaySummaryTitle)}` : '';
+    this.todaySummaryEl.innerHTML = `
+      <div class="label">Reporte de avance${suffix} — ${todayKey}</div>
+      <div class="today-sections">${body}</div>`;
+    this.todaySummaryEl.style.display = 'block';
+  }
+
+  toggleEdit(){
+    if(!this.toggleBtn) return;
+    if(!this.editMode){
+      const input = prompt('Ingresa la contraseña para editar el planificado:');
+      if(input === null) return;
+      if(input !== this.config.editPassword){
+        alert('Contraseña incorrecta');
+        return;
+      }
+    }
+    this.editMode = !this.editMode;
+    this.toggleBtn.textContent = this.editMode ? '✅ Terminar edición' : '✏️ Editar Planificado';
+    this.run();
+  }
 }
 
-function selectedResp(){
-  const set = new Set();
-  document.querySelectorAll(".rp-resp:checked").forEach(cb=> set.add(cb.value));
-  return set;
-}
-
-function handleCommentOutside(e){
-  if(!commentPopoverEl || !commentPopoverEl.classList.contains('open')) return;
-  if(commentPopoverEl.contains(e.target)) return;
-  if(commentPopoverState?.anchor && commentPopoverState.anchor.contains(e.target)) return;
-  closeCommentPopover();
-}
-function handleCommentEscape(e){ if(e.key === 'Escape') closeCommentPopover(); }
 function closeCommentPopover(){
   if(!commentPopoverEl) return;
   commentPopoverEl.classList.remove('open');
@@ -1070,15 +1794,28 @@ function closeCommentPopover(){
   document.removeEventListener('mousedown', handleCommentOutside);
   document.removeEventListener('keydown', handleCommentEscape);
   commentPopoverState = null;
+  activeCommentModule = null;
 }
-function openCommentPopover({ resp, fecha, anchor, comment, editable }){
-  if(!commentPopoverEl || !anchor) return;
-  if(commentPopoverState && commentPopoverState.anchor === anchor && commentPopoverEl.classList.contains('open')){
-    closeCommentPopover(); return;
+
+function handleCommentOutside(e){
+  if(!commentPopoverEl || !commentPopoverEl.classList.contains('open')) return;
+  if(commentPopoverEl.contains(e.target)) return;
+  if(commentPopoverState?.anchor && commentPopoverState.anchor.contains(e.target)) return;
+  closeCommentPopover();
+}
+
+function handleCommentEscape(e){ if(e.key === 'Escape') closeCommentPopover(); }
+
+function openCommentPopover(module, { resp, fecha, anchor, comment, editable }){
+  if(!commentPopoverEl || !anchor || !module) return;
+  if(activeCommentModule === module && commentPopoverState && commentPopoverState.anchor === anchor && commentPopoverEl.classList.contains('open')){
+    closeCommentPopover();
+    return;
   }
   closeCommentPopover();
 
-  commentPopoverState = { resp, fecha, anchor, editable };
+  activeCommentModule = module;
+  commentPopoverState = { module, resp, fecha, anchor, editable };
   const title = `Comentario — ${cap(resp)} (${fecha})`;
   let inner = `<h5>${esc(title)}</h5>`;
 
@@ -1131,13 +1868,13 @@ function openCommentPopover({ resp, fecha, anchor, comment, editable }){
         const trimmed = raw.trim();
         const payload = { coment: trimmed === '' ? null : raw };
         try{
-          await savePlanEntry(resp, fecha, payload);
-          rpStatus.textContent = trimmed === '' ? 'Comentario eliminado ✓' : 'Comentario guardado ✓';
+          await module.savePlanEntry(resp, fecha, payload);
+          module.setStatus(trimmed === '' ? 'Comentario eliminado ✓' : 'Comentario guardado ✓');
           closeCommentPopover();
-          await runReport();
+          await module.run();
         }catch(err){
           console.error(err);
-          rpStatus.textContent = 'Error al guardar comentario';
+          module.setStatus('Error al guardar comentario');
         }
       });
     }
@@ -1147,13 +1884,13 @@ function openCommentPopover({ resp, fecha, anchor, comment, editable }){
     if(deleteBtn){
       deleteBtn.addEventListener('click', async ()=>{
         try{
-          await savePlanEntry(resp, fecha, { coment: null });
-          rpStatus.textContent = 'Comentario eliminado ✓';
+          await module.savePlanEntry(resp, fecha, { coment: null });
+          module.setStatus('Comentario eliminado ✓');
           closeCommentPopover();
-          await runReport();
+          await module.run();
         }catch(err){
           console.error(err);
-          rpStatus.textContent = 'Error al eliminar comentario';
+          module.setStatus('Error al eliminar comentario');
         }
       });
     }
@@ -1166,410 +1903,10 @@ function openCommentPopover({ resp, fecha, anchor, comment, editable }){
   document.addEventListener('keydown', handleCommentEscape);
 }
 
-function scrollReportToToday(idx){
-  if(idx == null || idx < 0) return;
-  if(!rpTableWrap) return;
-  requestAnimationFrame(()=>{
-    const headerRow = rpTable.querySelector('tr');
-    if(!headerRow) return;
-    const target = headerRow.querySelector(`th:nth-child(${idx + 3})`);
-    if(!target) return;
-    const desired = target.offsetLeft - (rpTableWrap.clientWidth/2) + (target.offsetWidth/2);
-    const left = desired < 0 ? 0 : desired;
-    rpTableWrap.scrollTo({ left, behavior: 'smooth' });
-  });
-}
-
-// Tabla 'plan_pred'
-async function fetchPlan(start, end){
-  const { data, error } = await client.from("plan_pred")
-    .select("responsable,fecha,valor,coment")
-    .gte("fecha", start).lte("fecha", end);
-  if(error){ console.warn("plan_pred:", error.message); return []; }
-  return data||[];
-}
-async function savePlanEntry(resp, fecha, patch = {}){
-  const dow = parseYmd(fecha).getDay(); // 0=Dom,6=Sab
-  const hasValor = Object.prototype.hasOwnProperty.call(patch, "valor");
-  if(hasValor && (dow===0 || dow===6)) return;
-
-  const payload = { responsable: resp, fecha, ...patch };
-  if(!hasValor){
-    const current = window._rp_planCounts?.[resp]?.[fecha];
-    if(typeof current === "number") payload.valor = current;
-  }else{
-    payload.valor = Number(payload.valor)||0;
-  }
-
-  const { error } = await client.from("plan_pred")
-    .upsert(payload, { onConflict: "responsable,fecha" });
-  if(error) throw error;
-}
-
-async function runReport(){
-  const start = rpStart.value, end = rpEnd.value;
-  if(!start || !end){ alert("Selecciona fechas"); return; }
-  const allowed = selectedResp();
-
-  rpStatus.textContent = "Cargando…";
-  closeCommentPopover();
-  rpDetail.style.display = "none"; rpDetail.innerHTML = "";
-
-  const year = parseYmd(start).getFullYear();
-  const generalStart = `${year}-09-01`;
-  const generalEnd = `${year}-10-25`;
-
-  const [rangeResp, generalResp, planRows, planRowsGeneral] = await Promise.all([
-    client
-      .from("cod_pred")
-      .select("unir,cod_prel,codigo_mtc,comunidad,responsable,fecha_elab")
-      .not("fecha_elab","is",null)
-      .gte("fecha_elab", start)
-      .lte("fecha_elab", end),
-    client
-      .from("cod_pred")
-      .select("unir,cod_prel,codigo_mtc,comunidad,responsable,fecha_elab")
-      .not("fecha_elab","is",null)
-      .gte("fecha_elab", generalStart)
-      .lte("fecha_elab", generalEnd),
-    fetchPlan(start, end),
-    fetchPlan(generalStart, generalEnd)
-  ]);
-
-  if(rangeResp.error){ rpStatus.textContent = "Error: "+rangeResp.error.message; return; }
-
-  const groups = buildGroupsMap(rangeResp.data||[], allowed);
-  const generalGroups = buildGroupsMap(generalResp.data||[], allowed);
-
-  const dFrom = parseYmd(start), dTo = parseYmd(end);
-  const days = buildDays(dFrom, dTo);
-  const dKeys = days.map(dateKey);
-  const dMeta = days.map(d => ({ key: ymdFromDateLocal(d), dow: d.getDay() }));
-
-  const resps = [...new Set([...groups.values()].map(g=>g.responsable))].filter(Boolean).sort();
-
-  const doneCounts = {}; const planCounts = {}; const planComments = {};
-  resps.forEach(r=>{
-    doneCounts[r] = Object.fromEntries(dKeys.map(k=>[k,0]));
-    planCounts[r] = Object.fromEntries(dKeys.map(k=>[k,0]));
-    planComments[r] = Object.fromEntries(dKeys.map(k=>[k,null]));
-  });
-
-  const cellMapDone = new Map();
-
-  groups.forEach(g=>{
-    const r = g.responsable; const k = g.fecha;
-    if(!r || !k || !(k in (doneCounts[r]||{}))) return;
-    doneCounts[r][k] += 1;
-    const ck = `${r}|${k}`; if(!cellMapDone.has(ck)) cellMapDone.set(ck, []);
-    cellMapDone.get(ck).push({ comunidad: g.comunidad, codigo_mtc: g.codigo_mtc, unirId: g.unirId, cods: g.cods });
-  });
-
-  (planRows||[]).forEach(p=>{
-    const r = normResp(p.responsable);
-    const k = (p.fecha||"").toString().slice(0,10);
-    if(resps.includes(r) && dKeys.includes(k)){
-      planCounts[r][k] = Number(p.valor)||0;
-      planComments[r][k] = p.coment || null;
-    }
-  });
-
-  window._rp_planCounts = planCounts;
-  window._rp_planComments = planComments;
-
-  const todayKey = dateKey(new Date());
-  const planDaily = dMeta.map(({key}) => resps.reduce((acc,r)=> acc + (planCounts[r]?.[key]||0), 0));
-  const doneDaily = dMeta.map(({key}) => resps.reduce((acc,r)=> acc + (doneCounts[r]?.[key]||0), 0));
-
-  const todayIdxRaw = dKeys.indexOf(todayKey);
-  let todayIdx = todayIdxRaw;
-  if(todayIdx === -1){ todayIdx = -1; dKeys.forEach((k,i)=>{ if(k<=todayKey) todayIdx = i; }); }
-
-  const planToToday = todayIdx >=0 ? planDaily.slice(0, todayIdx+1).reduce((acc,v)=>acc+v,0) : 0;
-  const doneToToday = todayIdx >=0 ? doneDaily.slice(0, todayIdx+1).reduce((acc,v)=>acc+v,0) : 0;
-  const todayPct = planToToday ? Math.round((doneToToday/planToToday)*100) : 0;
-
-  const cutoffKey = todayIdx >=0 ? dKeys[todayIdx] : (todayKey < start ? start : end);
-  let cutoffSuffix = '';
-  if(todayIdx === -1 && todayKey < start){ cutoffSuffix = ' (hoy antes del rango)'; }
-  else if(dKeys.length && todayIdx === dKeys.length-1 && todayKey > end){ cutoffSuffix = ' (hoy después del rango)'; }
-
-  const lastIdxForLeader = todayIdx >=0 ? todayIdx : (todayKey < start ? -1 : dMeta.length - 1);
-  const leaders = resps.map(r=>{
-    let planAcc = 0, doneAcc = 0;
-    if(lastIdxForLeader >= 0){
-      for(let i=0; i<=lastIdxForLeader; i++){
-        const key = dMeta[i].key;
-        planAcc += planCounts[r][key] || 0;
-        doneAcc += doneCounts[r][key] || 0;
-      }
-    }
-    const pct = planAcc ? Math.round((doneAcc/planAcc)*100) : (doneAcc>0 ? 100 : 0);
-    return { name: cap(r), plan: planAcc, done: doneAcc, pct };
-  }).sort((a,b)=> b.done - a.done);
-
-  const generalPlanTotal = (planRowsGeneral||[]).reduce((acc,p)=>{
-    const resp = normResp(p.responsable);
-    if(allowed.size && !allowed.has(resp)) return acc;
-    return acc + (Number(p.valor)||0);
-  }, 0);
-  const generalDoneTotal = generalGroups.size;
-  const generalPct = generalPlanTotal ? Math.round((generalDoneTotal/generalPlanTotal)*100) : 0;
-
-  renderHeaderKpis({
-    generalPlan: generalPlanTotal,
-    generalDone: generalDoneTotal,
-    generalPct,
-    generalRange: `${generalStart} → ${generalEnd}`,
-    todayPlan: planToToday,
-    todayDone: doneToToday,
-    todayPct,
-    todayRange: `${start} → ${cutoffKey}${cutoffSuffix}`,
-    leaders
-  });
-
-  // Tabla
-  let html = "<tr>";
-  html += `<th class="sticky l1">RESPONSABLE</th>`;
-  html += `<th class="sticky l2">TIPO</th>`;
-  dMeta.forEach(({key,dow})=>{
-    const d = parseYmd(key);
-    const clsBase = dow===0 ? "col-sun" : (dow===6 ? "col-sat" : "");
-    const clsToday = key===todayKey ? "today-col" : "";
-    const cls = `${clsBase} ${clsToday}`.trim();
-    html += `<th class="${cls}">${String(d.getDate()).padStart(2,'0')}<div class="muted">${["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][dow]}</div></th>`;
-  });
-  html += `<th>Total</th></tr>`;
-
-  resps.forEach(r=>{
-    const respLabel = esc(cap(r));
-    const commentCols = new Map();
-
-    // Planificado
-    let rowPlan = 0;
-    html += `<tr class="plan-row">`;
-    html += `<td class="sticky l1" rowspan="2"><div class="resp-cell">${respLabel}</div></td>`;
-    html += `<td class="sticky l2 type-cell">Planificado</td>`;
-    dMeta.forEach(({key,dow})=>{
-      const val = planCounts[r][key] || 0; rowPlan += val;
-      const comment = planComments[r][key] || "";
-      const trimmed = comment.trim().toLowerCase();
-      const isBajada = trimmed === "bajada";
-      const hasComment = !!comment;
-      if(hasComment) commentCols.set(key, { isBajada });
-      const classes = [
-        dow===0 ? "col-sun" : (dow===6 ? "col-sat" : ""),
-        key===todayKey ? "today-col" : "",
-        hasComment ? `comment-cell${isBajada ? " comment-bajada" : ""}` : ""
-      ].filter(Boolean).join(" ");
-      const showPin = rpEditMode;
-      const pinClasses = ["comment-pin"];
-      if(hasComment) pinClasses.push("has-comment");
-      else if(rpEditMode) pinClasses.push("empty");
-      if(isBajada) pinClasses.push("bajada");
-      const ariaLabel = hasComment ? (rpEditMode ? "Editar comentario" : "Ver comentario") : "Agregar comentario";
-      const pinHtml = showPin ? `<button type="button" class="${pinClasses.join(" ")}" data-resp="${r}" data-date="${key}" aria-label="${esc(ariaLabel)}"></button>` : "";
-
-      if(rpEditMode){
-        const disabled = (dow===0 || dow===6) ? "disabled" : "";
-        html += `<td class="${classes}">
-          <div class="plan-cell has-pin">
-            <input class="ovr-input" data-resp="${r}" data-date="${key}" type="number" min="0" value="${val}" ${disabled}>
-            ${pinHtml}
-          </div>
-        </td>`;
-      }else{
-        html += `<td class="${classes}">
-          <div class="plan-cell readonly">
-            <span class="value" data-open-comment="1" data-resp="${r}" data-date="${key}">${val}</span>
-          </div>
-        </td>`;
-      }
-    });
-    html += `<td><b>${rowPlan}</b></td>`;
-    html += `</tr>`;
-
-    // Elaborado
-    let rowDone = 0;
-    html += `<tr class="done-row">`;
-    html += `<td class="sticky l2 type-cell">Elaborado</td>`;
-    dMeta.forEach(({key,dow})=>{
-      const n = doneCounts[r][key] || 0; rowDone += n;
-      const commentMeta = commentCols.get(key);
-      const hasComment = !!commentMeta;
-      const isBajada = commentMeta?.isBajada;
-      const classes = [
-        dow===0 ? "col-sun" : (dow===6 ? "col-sat" : ""),
-        key===todayKey ? "today-col" : "",
-        hasComment ? `comment-cell comment-linked${isBajada ? " comment-bajada" : ""}` : ""
-      ].filter(Boolean).join(" ");
-      if(n>0){
-        html += `<td class="${classes} clickable" onclick="openRpCell('${r}','${key}')"><b>${n}</b></td>`;
-      }else{
-        html += `<td class="${classes} muted">0</td>`;
-      }
-    });
-    html += `<td><b>${rowDone}</b></td>`;
-    html += `</tr>`;
-  });
-
-  rpTable.innerHTML = html;
-
-  // Centrar en HOY
-  requestAnimationFrame(()=> scrollReportToToday(todayIdx));
-
-  // Click número para abrir comentario en lectura
-  rpTable.querySelectorAll('.plan-cell.readonly [data-open-comment="1"]').forEach(el=>{
-    el.addEventListener('click', (e)=>{
-      const resp  = el.getAttribute('data-resp');
-      const fecha = el.getAttribute('data-date');
-      const current = window._rp_planComments?.[resp]?.[fecha] || "";
-      openCommentPopover({ resp, fecha, anchor: el, comment: current, editable: rpEditMode });
-    });
-  });
-
-  // Guardado inline
-  rpTable.querySelectorAll(".ovr-input:not([disabled])").forEach(inp=>{
-    inp.addEventListener("change", async (e)=>{
-      const resp = e.target.getAttribute("data-resp");
-      const fecha = e.target.getAttribute("data-date");
-      const valor = Number(e.target.value)||0;
-      try{
-        await savePlanEntry(resp, fecha, { valor });
-        rpStatus.textContent = "Planificado guardado ✓";
-        await runReport();
-      }catch(err){
-        console.error(err);
-        rpStatus.textContent = "Error al guardar planificado";
-      }
-    });
-  });
-
-  // Comentarios (edición)
-  rpTable.querySelectorAll(".comment-pin").forEach(btn=>{
-    btn.addEventListener("click", (e)=>{
-      e.stopPropagation();
-      const resp = btn.getAttribute("data-resp");
-      const fecha = btn.getAttribute("data-date");
-      const current = window._rp_planComments?.[resp]?.[fecha] || "";
-      openCommentPopover({ resp, fecha, anchor: btn, comment: current, editable: rpEditMode });
-    });
-  });
-
-  // Curva S
-  const labels = dMeta.map(({key})=>{ const d = parseYmd(key); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`; });
-  const planCum = []; planDaily.reduce((acc,v)=>{ const next=acc+v; planCum.push(next); return next; },0);
-  const doneCum = []; doneDaily.reduce((acc,v,idx)=>{ if(todayIdx>=0 && idx>todayIdx){ doneCum.push(null); return acc; } const next=acc+v; doneCum.push(next); return next; },0);
-  renderReportCurve(labels, planCum, doneCum, todayIdx);
-
-  window._rp_cellMapDone = cellMapDone;
-  rpStatus.textContent = "Listo.";
-}
-
-function buildGroupsMap(rows, allowed = new Set()){
-  const map = new Map();
-  (rows||[]).forEach(r=>{
-    const resp = normResp(r?.responsable);
-    if(!resp) return;
-    if(allowed.size && !allowed.has(resp)) return;
-    const key = r?.unir;
-    if(key == null) return;
-    if(!map.has(key)){
-      map.set(key, {
-        responsable: resp,
-        fecha: (r.fecha_elab||"").toString().slice(0,10),
-        comunidad: r.comunidad || "",
-        codigo_mtc: r.codigo_mtc || "",
-        unirId: key,
-        cods: []
-      });
-    }
-    map.get(key).cods.push(r.cod_prel || "");
-  });
-  return map;
-}
-
-function renderHeaderKpis({ generalPlan, generalDone, generalPct, generalRange, todayPlan, todayDone, todayPct, todayRange, leaders }){
-  const fmt = (n) => numberFormatter.format(Math.round(n || 0));
-  const setText = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
-
-  document.getElementById('rp_kpiHeader')?.classList.add('compact');
-  document.getElementById('kpiLeaderList')?.classList.add('compact','twocol');
-
-  setText('kpiGeneralPlan', fmt(generalPlan));
-  setText('kpiGeneralDone', fmt(generalDone));
-  setText('kpiGeneralPct', `${Math.round(generalPct||0)}%`);
-  setText('kpiGeneralPlanRange', generalRange);
-  setText('kpiGeneralDoneRange', generalRange);
-
-  setText('kpiTodayPlan', fmt(todayPlan));
-  setText('kpiTodayDone', fmt(todayDone));
-  setText('kpiTodayPct', `${Math.round(todayPct||0)}%`);
-  setText('kpiTodayRange', todayRange);
-
-  const listEl = document.getElementById('kpiLeaderList');
-  if(!listEl) return;
-  if(!leaders || leaders.length === 0){
-    listEl.innerHTML = '<div class="muted">Sin responsables en el rango.</div>';
-    return;
-  }
-  listEl.innerHTML = leaders.map(l => {
-    const pct = Math.round(l.pct || 0);
-    const doneLabel = fmt(l.done);
-    const planLabel = l.plan > 0 ? fmt(l.plan) : '—';
-    return `
-      <div class="leader-row">
-        <div class="leader-main">
-          <span class="leader-name">${esc(l.name)}</span>
-          <span class="badge" title="Elaborado / Planificado">${doneLabel} / ${planLabel}</span>
-        </div>
-        <span class="leader-pct">${pct}%</span>
-      </div>
-    `;
-  }).join('');
-}
-
-// Detalle de una celda (lista de grupos UNIR con sus códigos)
-window.openRpCell = function(resp, ymd){
-  const list = (window._rp_cellMapDone?.get(`${resp}|${ymd}`)) || [];
-  const rows = list.map(g=>{
-    const codes = g.cods.map(c=>`<button class="code-link" data-code="${esc(c)}" data-unir="${g.unirId}">${esc(c)}</button>`).join("");
-    return `
-      <tr>
-        <td>${esc(g.comunidad)}</td>
-        <td>${esc(g.codigo_mtc)}</td>
-        <td style="text-align:left">${codes}</td>
-      </tr>`;
-  }).join("");
-  rpDetail.innerHTML = `
-    <div class="label">Detalle — ${cap(resp)} — ${ymd}</div>
-    <div style="overflow:auto"><table class="report" style="width:100%">
-      <thead><tr><th>Comunidad</th><th>Código MTC</th><th>cod_prel (grupo UNIR)</th></tr></thead>
-      <tbody>${rows || `<tr><td colspan="3" class="muted">Sin grupos</td></tr>`}</tbody>
-    </table></div>`;
-  rpDetail.style.display = "block";
+window.openReportCell = function(moduleKey, resp, ymd){
+  const module = REPORT_MODULES[moduleKey];
+  module?.renderDetail(resp, ymd);
 };
-
-rpDetail.addEventListener("click", async (e)=>{
-  const btn = e.target.closest(".code-link");
-  if(!btn) return;
-  const cod = btn.dataset.code;
-  const unir = btn.dataset.unir;
-  await selectFromReport(unir, cod);
-});
-
-async function selectFromReport(unir, cod){
-  await showGroup(Number(unir));
-  selectedCodPrel = cod;
-  focusByCodPrel(cod);
-  highlightGroup(Number(unir), false);
-  const card = Array.from(document.getElementById("areasList").querySelectorAll(".area-card")).find(el => el.getAttribute("data-cod") === cod);
-  if(card){
-    card.classList.add("flash");
-    card.scrollIntoView({ behavior:"smooth", block:"center" });
-    setTimeout(()=> card.classList.remove("flash"), 1200);
-  }
-}
 
 const TodayLinePlugin = {
   id:'todayLine',
@@ -1595,27 +1932,115 @@ const TodayLinePlugin = {
 };
 let todayPluginRegistered = false;
 
-function renderReportCurve(labels, planCum, doneCum, todayIdx){
-  document.getElementById("chartWrap").style.display = "block";
-  const ctx = document.getElementById("rp_chart").getContext("2d");
-  if(rpChart) rpChart.destroy();
-  if(!todayPluginRegistered){ Chart.register(TodayLinePlugin); todayPluginRegistered = true; }
-  rpChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        { label: 'Planificado acumulado', data: planCum, tension: 0.3, borderColor: '#0ea5e9', backgroundColor: 'rgba(14,165,233,.12)', fill: false, pointRadius: 3 },
-        { label: 'Elaborado acumulado', data: doneCum, tension: 0.3, borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,.12)', fill: false, pointRadius: 3, spanGaps: true }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: 'top' }, tooltip: { enabled: true }, todayLine: { index: todayIdx } },
-      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+function buildGroupsMap(rows, allowed = new Set(), respField = 'responsable', dateField = 'fecha_elab'){
+  const map = new Map();
+  (rows||[]).forEach(r=>{
+    const resp = normResp(r?.[respField]);
+    if(!resp) return;
+    if(allowed.size && !allowed.has(resp)) return;
+    const key = r?.unir;
+    if(key == null) return;
+    if(!map.has(key)){
+      map.set(key, {
+        responsable: resp,
+        fecha: (r?.[dateField]||'').toString().slice(0,10),
+        comunidad: r?.comunidad || '',
+        codigo_mtc: r?.codigo_mtc || '',
+        unirId: key,
+        cods: []
+      });
     }
+    map.get(key).cods.push(r?.cod_prel || '');
   });
+  return map;
 }
+
+const reportTech = new ReportModule({
+  key: 'tech',
+  openBtnId: 'btnReport',
+  drawerId: 'reportDrawer',
+  closeBtnId: 'rp_close',
+  startInputId: 'rp_start',
+  endInputId: 'rp_end',
+  runBtnId: 'rp_run',
+  toggleBtnId: 'rp_toggleEdit',
+  statusId: 'rp_status',
+  chipsContainerId: 'rp_chips',
+  tableId: 'rp_table',
+  tableWrapId: 'rp_tableWrap',
+  chartWrapId: 'chartWrap',
+  chartCanvasId: 'rp_chart',
+  detailId: 'rp_detail',
+  todaySummaryId: 'rp_todaySummary',
+  kpi: {
+    headerId: 'rp_kpiHeader',
+    generalPlanId: 'kpiGeneralPlan',
+    generalPlanRangeId: 'kpiGeneralPlanRange',
+    generalDoneId: 'kpiGeneralDone',
+    generalDoneRangeId: 'kpiGeneralDoneRange',
+    generalPctId: 'kpiGeneralPct',
+    todayPlanId: 'kpiTodayPlan',
+    todayDoneId: 'kpiTodayDone',
+    todayPctId: 'kpiTodayPct',
+    todayRangeId: 'kpiTodayRange',
+    leadersListId: 'kpiLeaderList'
+  },
+  respField: 'responsable',
+  dateField: 'fecha_elab',
+  planTable: 'plan_pred',
+  planRespField: 'responsable',
+  planOnConflict: 'responsable,fecha',
+  editPassword: 'assa$2025',
+  planLabel: 'Planificado',
+  doneLabel: 'Elaborado',
+  detailTitlePrefix: 'Detalle',
+  todaySummaryTitle: 'técnico'
+});
+
+const reportLegal = new ReportModule({
+  key: 'legal',
+  openBtnId: 'btnLegalReport',
+  drawerId: 'legalReportDrawer',
+  closeBtnId: 'lr_close',
+  startInputId: 'lr_start',
+  endInputId: 'lr_end',
+  runBtnId: 'lr_run',
+  toggleBtnId: 'lr_toggleEdit',
+  statusId: 'lr_status',
+  chipsContainerId: 'lr_chips',
+  tableId: 'lr_table',
+  tableWrapId: 'lr_tableWrap',
+  chartWrapId: 'lr_chartWrap',
+  chartCanvasId: 'lr_chart',
+  detailId: 'lr_detail',
+  todaySummaryId: 'lr_todaySummary',
+  kpi: {
+    headerId: 'lr_kpiHeader',
+    generalPlanId: 'lkpiGeneralPlan',
+    generalPlanRangeId: 'lkpiGeneralPlanRange',
+    generalDoneId: 'lkpiGeneralDone',
+    generalDoneRangeId: 'lkpiGeneralDoneRange',
+    generalPctId: 'lkpiGeneralPct',
+    todayPlanId: 'lkpiTodayPlan',
+    todayDoneId: 'lkpiTodayDone',
+    todayPctId: 'lkpiTodayPct',
+    todayRangeId: 'lkpiTodayRange',
+    leadersListId: 'lkpiLeaderList'
+  },
+  respField: 'resp_legal',
+  dateField: 'avance_legal',
+  planTable: 'plan_pred_legal',
+  planRespField: 'resp_legal',
+  planOnConflict: 'resp_legal,fecha',
+  editPassword: 'assa$2025',
+  planLabel: 'Planificado',
+  doneLabel: 'Avance',
+  detailTitlePrefix: 'Detalle legal',
+  todaySummaryTitle: 'legal'
+});
+
+window.reportTech = reportTech;
+window.reportLegal = reportLegal;
 
 function esc(s){ return (s??"").toString().replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
 function cap(r){ return (r||"").replace(/\b\w/g,m=>m.toUpperCase()); }
