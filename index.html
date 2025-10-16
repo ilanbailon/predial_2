@@ -185,6 +185,12 @@ on:relative}
 
     #chartWrap,#lr_chartWrap{margin:12px 16px 16px;border:1px solid #eee;border-radius:10px;padding:10px;background:#fff}
     #rp_detail,#lr_detail{margin:0 16px 16px;border:1px dashed #e5e7eb;border-radius:10px;padding:10px;background:#fafafa}
+    #rp_detail .detail-sections,#lr_detail .detail-sections{display:flex;flex-direction:column;gap:12px}
+    .detail-section{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px}
+    .detail-section.active{border-color:rgba(14,165,233,.6);box-shadow:0 0 0 2px rgba(14,165,233,.08)}
+    .detail-section h4{margin:0 0 8px;font-size:13px;color:#0f172a}
+    .detail-section table{width:100%}
+    .detail-section .muted{text-align:center}
     #rp_todaySummary,#lr_todaySummary{margin:0 16px 16px;border:1px solid #e5e7eb;border-radius:10px;padding:12px;background:#fff}
     #rp_todaySummary .today-sections,#lr_todaySummary .today-sections{display:flex;flex-direction:column;gap:12px}
     #rp_todaySummary .today-section h4,#lr_todaySummary .today-section h4{margin:0 0 8px;color:#0f172a}
@@ -509,7 +515,6 @@ on:relative}
     </div>
 
     <div id="rp_todaySummary" class="block" style="display:none"></div>
-    <div id="rp_detail" style="display:none"></div>
   </aside>
 
   <!-- Drawer Reporte Legal -->
@@ -523,7 +528,6 @@ on:relative}
       <label>Desde: <input id="lr_start" type="date"></label>
       <label>Hasta: <input id="lr_end" type="date"></label>
       <button class="btn" id="lr_run">Generar</button>
-      <button class="ghost" id="lr_todayBtn">📅 Hoy</button>
       <button class="ghost" id="lr_toggleEdit">✏️ Editar Planificado</button>
       <span id="lr_status" class="muted"></span>
     </div>
@@ -540,7 +544,7 @@ on:relative}
             <small id="lkpiGeneralPlanRange">—</small>
           </div>
           <div class="kpi-metric">
-            <div class="m-label">Legalizado</div>
+            <div class="m-label">Avance</div>
             <div class="m-val" id="lkpiGeneralDone">—</div>
             <small id="lkpiGeneralDoneRange">—</small>
           </div>
@@ -560,7 +564,7 @@ on:relative}
             <small id="lkpiTodayRange">—</small>
           </div>
           <div class="kpi-metric">
-            <div class="m-label">Legalizado</div>
+            <div class="m-label">Avance</div>
             <div class="m-val" id="lkpiTodayDone">—</div>
             <small>Corte seleccionado</small>
           </div>
@@ -581,12 +585,13 @@ on:relative}
       <table id="lr_table" class="report"></table>
     </div>
 
+    <div id="lr_detail" style="display:none"></div>
+
     <div id="lr_chartWrap" style="display:none">
       <canvas id="lr_chart" height="336"></canvas>
     </div>
 
     <div id="lr_todaySummary" class="block" style="display:none"></div>
-    <div id="lr_detail" style="display:none"></div>
   </aside>
 
   <div id="commentPopover" class="comment-popover" role="dialog" aria-modal="false"></div>
@@ -1187,6 +1192,7 @@ class ReportModule {
     this.resps = [];
     this.dMeta = [];
     this.dateKeys = [];
+    this.activeDetailDay = null;
 
     this.openBtn?.addEventListener('click', ()=>this.open());
     this.closeBtn?.addEventListener('click', ()=>this.close());
@@ -1430,6 +1436,17 @@ class ReportModule {
     });
 
     this.renderTable({ dMeta, todayKey, todayIdx, doneCounts, planCounts, planComments });
+
+    let nextDetailDay = null;
+    if(this.activeDetailDay && dKeys.includes(this.activeDetailDay)){
+      nextDetailDay = this.activeDetailDay;
+    }else if(dKeys.includes(todayKey)){
+      nextDetailDay = todayKey;
+    }else if(dKeys.length){
+      nextDetailDay = dKeys[dKeys.length - 1];
+    }
+    this.renderDailyDetail(nextDetailDay);
+
     this.renderCurve(dMeta, planDaily, doneDaily, todayIdx);
     this.renderTodaySummary(start, end, todayKey, cellMapDone);
 
@@ -1654,18 +1671,68 @@ class ReportModule {
   }
 
   renderDetail(resp, ymd){
-    if(!this.detailEl) return;
-    const list = this.cellMapDone?.get(`${resp}|${ymd}`) || [];
-    const rows = list.map(g=>{
-      const codes = g.cods.map(c=>`<button class="code-link" data-code="${esc(c)}" data-unir="${g.unirId}">${esc(c)}</button>`).join('');
-      return `<tr><td>${esc(g.comunidad)}</td><td>${esc(g.codigo_mtc)}</td><td style="text-align:left">${codes}</td></tr>`;
-    }).join('');
+    this.renderDailyDetail(ymd, resp);
+  }
+
+  renderDailyDetail(ymd, primaryResp = null){
+    if(!this.detailEl){
+      this.activeDetailDay = ymd || null;
+      return;
+    }
+    if(!ymd){
+      this.detailEl.innerHTML = '';
+      this.detailEl.style.display = 'none';
+      this.activeDetailDay = null;
+      return;
+    }
+
+    this.activeDetailDay = ymd;
+    const resps = Array.isArray(this.resps) ? [...this.resps] : [];
+    if(primaryResp && resps.includes(primaryResp)){
+      resps.splice(resps.indexOf(primaryResp), 1);
+      resps.unshift(primaryResp);
+    }
+
+    const parsed = parseYmd(ymd);
+    const isValid = !Number.isNaN(parsed?.getTime?.());
+    const dateLabel = isValid
+      ? `${String(parsed.getDate()).padStart(2,'0')}/${String(parsed.getMonth()+1).padStart(2,'0')}/${parsed.getFullYear()}`
+      : ymd;
+
+    const totalDay = resps.reduce((acc, r)=>{
+      const list = this.cellMapDone?.get(`${r}|${ymd}`) || [];
+      return acc + list.length;
+    }, 0);
+    const totalLabel = `${totalDay} ${totalDay === 1 ? 'expediente' : 'expedientes'}`;
+
+    let sections = '';
+    if(resps.length === 0){
+      sections = '<div class="detail-section"><h4>Sin responsables</h4><div class="muted">No hay responsables en el rango seleccionado.</div></div>';
+    }else{
+      sections = resps.map(r=>{
+        const list = this.cellMapDone?.get(`${r}|${ymd}`) || [];
+        const rows = list.map(g=>{
+          const codes = g.cods.map(c=>`<button class="code-link" data-code="${esc(c)}" data-unir="${g.unirId}">${esc(c)}</button>`).join('');
+          return `<tr><td>${esc(g.comunidad)}</td><td>${esc(g.codigo_mtc)}</td><td style="text-align:left">${codes}</td></tr>`;
+        }).join('');
+        const rowBody = rows || '<tr><td colspan="3" class="muted">Sin expedientes</td></tr>';
+        const count = list.length;
+        const countLabel = `${count} ${count === 1 ? 'expediente' : 'expedientes'}`;
+        const classes = ['detail-section'];
+        if(primaryResp && r === primaryResp) classes.push('active');
+        return `<div class="${classes.join(' ')}">
+          <h4>${esc(cap(r))} · ${countLabel}</h4>
+          <div style="overflow:auto"><table class="report">
+            <thead><tr><th>Comunidad</th><th>Código MTC</th><th>cod_prel (grupo UNIR)</th></tr></thead>
+            <tbody>${rowBody}</tbody>
+          </table></div>
+        </div>`;
+      }).join('');
+    }
+
     this.detailEl.innerHTML = `
-      <div class="label">${esc(this.config.detailTitlePrefix || 'Detalle')} — ${esc(cap(resp))} — ${ymd}</div>
-      <div style="overflow:auto"><table class="report" style="width:100%">
-        <thead><tr><th>Comunidad</th><th>Código MTC</th><th>cod_prel (grupo UNIR)</th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="3" class="muted">Sin grupos</td></tr>'}</tbody>
-      </table></div>`;
+      <div class="label">${esc(this.config.detailTitlePrefix || 'Detalle')} — ${dateLabel} · ${totalLabel}</div>
+      <div class="detail-sections">${sections}</div>`;
     this.detailEl.style.display = 'block';
   }
 
@@ -1895,7 +1962,6 @@ const reportTech = new ReportModule({
   startInputId: 'rp_start',
   endInputId: 'rp_end',
   runBtnId: 'rp_run',
-  todayButtonId: 'rp_todayBtn',
   toggleBtnId: 'rp_toggleEdit',
   statusId: 'rp_status',
   chipsContainerId: 'rp_chips',
@@ -1938,7 +2004,6 @@ const reportLegal = new ReportModule({
   startInputId: 'lr_start',
   endInputId: 'lr_end',
   runBtnId: 'lr_run',
-  todayButtonId: 'lr_todayBtn',
   toggleBtnId: 'lr_toggleEdit',
   statusId: 'lr_status',
   chipsContainerId: 'lr_chips',
@@ -1968,7 +2033,7 @@ const reportLegal = new ReportModule({
   planOnConflict: 'resp_legal,fecha',
   editPassword: 'assa$2025',
   planLabel: 'Planificado',
-  doneLabel: 'Legalizado',
+  doneLabel: 'Avance',
   detailTitlePrefix: 'Detalle legal',
   todaySummaryTitle: 'legal'
 });
