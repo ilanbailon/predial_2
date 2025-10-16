@@ -452,6 +452,7 @@ on:relative}
       <label>Desde: <input id="rp_start" type="date"></label>
       <label>Hasta: <input id="rp_end" type="date"></label>
       <button class="btn" id="rp_run">Generar</button>
+      <button class="ghost" id="rp_todayBtn">📅 Hoy</button>
       <button class="ghost" id="rp_toggleEdit">✏️ Editar Planificado</button>
       <span id="rp_status" class="muted"></span>
     </div>
@@ -508,8 +509,6 @@ on:relative}
     <div id="rp_tableWrap">
       <table id="rp_table" class="report"></table>
     </div>
-
-    <div id="rp_detail" style="display:none"></div>
 
     <div id="chartWrap" style="display:none">
       <canvas id="rp_chart" height="336"></canvas>
