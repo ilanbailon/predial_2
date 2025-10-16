@@ -1067,10 +1067,11 @@ async function runExpedientes(){
     .gte("fecha_elab", start)
     .lte("fecha_elab", end);
 
-  const g = expGrupo.value;
-  const r = expResp.value;
-  if(g) q = q.eq("grupo", g);
-  if(r) q = q.eq("responsable", r);
+  const g = (expGrupo.value || '').trim();
+  const r = (expResp.value || '').trim();
+
+  if (g) q = q.eq("grupo", g);          // Grupo está bien con eq
+  if (r) q = q.ilike("responsable", r); // <- clave: insensible a mayúsculas
 
   const { data, error } = await q.order('fecha_elab', { ascending:true });
   if(error){ console.error(error.message); alert('Error consultando expedientes'); return; }
