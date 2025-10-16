@@ -158,7 +158,30 @@ on:relative}
     .today-col{ position:relative; background:var(--today-bg) !important; box-shadow:inset 0 0 0 9999px var(--today-wash); }
     .today-col::after{ content:""; position:absolute; inset:-2px; border:2px solid var(--today-ring); border-radius:8px; pointer-events:none; }
 
-    .comment-preview{display:none}
+    .comment-preview{
+      margin:8px 0 10px;
+      padding:8px 10px;
+      background:var(--comment-bg);
+      border:1px solid rgba(250,204,21,.5);
+      border-radius:8px;
+      color:#713f12;
+      font-size:13px;
+      line-height:1.45;
+      box-shadow:0 4px 14px rgba(113,63,18,.08);
+      white-space:pre-wrap;
+    }
+    .comment-preview .comment-title{display:block;font-size:12px;color:#92400e;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+    .comment-preview.bajada{background:#e5e7eb;border-color:rgba(148,163,184,.7);color:#1f2937;box-shadow:0 4px 14px rgba(30,41,59,.08)}
+    .comment-preview.bajada .comment-title{color:#1f2937}
+
+    @media print{
+      header,#split,#globalLoader,#commentPopover{display:none !important;}
+      body{overflow:visible !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;}
+      table.report th,table.report td{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;}
+      .drawer{position:static !important;transform:none !important;width:auto !important;height:auto !important;box-shadow:none !important;border:none !important;}
+      .drawer-head{position:static !important;}
+      .print-hidden{display:none !important;}
+    }
 
     /* ===== Global loader ===== */
     #globalLoader{
@@ -445,15 +468,16 @@ on:relative}
   <aside id="reportDrawer" class="drawer" aria-hidden="true">
     <div class="drawer-head">
       <h3 style="margin:0">Reporte — Planificado vs Elaborado</h3>
-      <button class="btn-small" id="rp_close">✕</button>
+      <button class="btn-small print-hidden" id="rp_close">✕</button>
     </div>
 
     <div class="row">
       <label>Desde: <input id="rp_start" type="date"></label>
       <label>Hasta: <input id="rp_end" type="date"></label>
-      <button class="btn" id="rp_run">Generar</button>
-      <button class="ghost" id="rp_todayBtn">📅 Hoy</button>
-      <button class="ghost" id="rp_toggleEdit">✏️ Editar Planificado</button>
+      <button class="btn print-hidden" id="rp_run">Generar</button>
+      <button class="ghost print-hidden" id="rp_todayBtn">📅 Hoy</button>
+      <button class="ghost print-hidden" id="rp_toggleEdit">✏️ Editar Planificado</button>
+      <button class="ghost print-hidden" id="rp_print">🖨️ Imprimir</button>
       <span id="rp_status" class="muted"></span>
     </div>
 
@@ -514,6 +538,8 @@ on:relative}
       <canvas id="rp_chart" height="336"></canvas>
     </div>
 
+    <div id="rp_detail" class="block" style="display:none"></div>
+
     <div id="rp_todaySummary" class="block" style="display:none"></div>
   </aside>
 
@@ -521,14 +547,15 @@ on:relative}
   <aside id="legalReportDrawer" class="drawer" aria-hidden="true">
     <div class="drawer-head">
       <h3 style="margin:0">Reporte — Avance Legal</h3>
-      <button class="btn-small" id="lr_close">✕</button>
+      <button class="btn-small print-hidden" id="lr_close">✕</button>
     </div>
 
     <div class="row">
       <label>Desde: <input id="lr_start" type="date"></label>
       <label>Hasta: <input id="lr_end" type="date"></label>
-      <button class="btn" id="lr_run">Generar</button>
-      <button class="ghost" id="lr_toggleEdit">✏️ Editar Planificado</button>
+      <button class="btn print-hidden" id="lr_run">Generar</button>
+      <button class="ghost print-hidden" id="lr_toggleEdit">✏️ Editar Planificado</button>
+      <button class="ghost print-hidden" id="lr_print">🖨️ Imprimir</button>
       <span id="lr_status" class="muted"></span>
     </div>
 
@@ -585,7 +612,7 @@ on:relative}
       <table id="lr_table" class="report"></table>
     </div>
 
-    <div id="lr_detail" style="display:none"></div>
+    <div id="lr_detail" class="block" style="display:none"></div>
 
     <div id="lr_chartWrap" style="display:none">
       <canvas id="lr_chart" height="336"></canvas>
@@ -1162,6 +1189,7 @@ class ReportModule {
     this.runBtn = document.getElementById(config.runBtnId);
     this.todayBtn = config.todayButtonId ? document.getElementById(config.todayButtonId) : null;
     this.toggleBtn = config.toggleBtnId ? document.getElementById(config.toggleBtnId) : null;
+    this.printBtn = config.printBtnId ? document.getElementById(config.printBtnId) : null;
     this.statusEl = config.statusId ? document.getElementById(config.statusId) : null;
     this.chipsContainer = config.chipsContainerId ? document.getElementById(config.chipsContainerId) : null;
     this.table = document.getElementById(config.tableId);
@@ -1186,6 +1214,7 @@ class ReportModule {
 
     this.chart = null;
     this.editMode = false;
+    this.printTitle = config.printTitle || `${document.title || 'Geoportal'} — ${config.key}`;
     this.planCounts = {};
     this.planComments = {};
     this.cellMapDone = new Map();
@@ -1193,12 +1222,14 @@ class ReportModule {
     this.dMeta = [];
     this.dateKeys = [];
     this.activeDetailDay = null;
+    this.currentTodayIdx = -1;
 
     this.openBtn?.addEventListener('click', ()=>this.open());
     this.closeBtn?.addEventListener('click', ()=>this.close());
     this.runBtn?.addEventListener('click', ()=>this.run());
     this.todayBtn?.addEventListener('click', ()=>this.runToday());
     this.toggleBtn?.addEventListener('click', ()=>this.toggleEdit());
+    this.printBtn?.addEventListener('click', ()=>this.print());
 
     if(this.detailEl){
       this.detailEl.addEventListener('click', async (e)=>{
@@ -1249,6 +1280,33 @@ class ReportModule {
     if(activeCommentModule === this) closeCommentPopover();
   }
 
+  print(){
+    if(!this.drawer) return;
+    const printWindow = window.open('', '_blank', 'width=1200,height=900');
+    if(!printWindow){
+      alert('No se pudo abrir la ventana de impresión. Permite las ventanas emergentes para continuar.');
+      return;
+    }
+    const clone = this.drawer.cloneNode(true);
+    clone.classList.add('open');
+    clone.setAttribute('aria-hidden','false');
+    const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+      .map(node => node.outerHTML)
+      .join('');
+    const safeTitle = (this.printTitle || document.title || 'Reporte')
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;');
+    printWindow.document.open();
+    printWindow.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>${safeTitle}</title>${styles}<style>body{margin:0;padding:24px;background:#fff;color:#0f172a;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,\"Helvetica Neue\",Arial,sans-serif;} .drawer{position:static!important;transform:none!important;width:auto!important;height:auto!important;box-shadow:none!important;border:none!important;} .drawer-head{position:static!important;} .drawer .print-hidden{display:none!important;} .drawer .row{padding-left:0;padding-right:0;} @media print{body{padding:0;}}</style></head><body>${clone.outerHTML}</body></html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    if('onafterprint' in printWindow){
+      printWindow.onafterprint = ()=>{ try{ printWindow.close(); }catch(e){} };
+    }
+    setTimeout(()=>{ try{ printWindow.print(); }catch(e){} }, 500);
+  }
+
   runToday(){
     const today = ymdFromDateLocal(new Date());
     if(this.startInput) this.startInput.value = today;
@@ -1279,13 +1337,15 @@ class ReportModule {
 
   async savePlanEntry(resp, fecha, patch = {}){
     if(!this.config.planTable || !this.config.planRespField) return;
+    const normalizedResp = normResp(resp);
+    if(!normalizedResp || !fecha) return;
     const dow = parseYmd(fecha).getDay();
     const hasValor = Object.prototype.hasOwnProperty.call(patch, 'valor');
     if(hasValor && (dow===0 || dow===6)) return;
-    const payload = { [this.config.planRespField]: resp, fecha, ...patch };
+    const payload = { [this.config.planRespField]: normalizedResp, fecha, ...patch };
     if(!hasValor){
-      const current = this.planCounts?.[resp]?.[fecha];
-      if(typeof current === 'number') payload.valor = current;
+      const current = this.planCounts?.[normalizedResp]?.[fecha];
+      payload.valor = typeof current === 'number' ? Number(current) || 0 : 0;
     }else{
       payload.valor = Number(payload.valor)||0;
     }
@@ -1575,7 +1635,8 @@ class ReportModule {
 
     this.table.innerHTML = html;
     this.attachTableEvents();
-    this.scrollToToday(todayIdx);
+    this.currentTodayIdx = typeof todayIdx === 'number' ? todayIdx : -1;
+    this.scrollToToday(this.currentTodayIdx);
   }
 
   attachTableEvents(){
@@ -1614,18 +1675,33 @@ class ReportModule {
     });
   }
 
-  scrollToToday(idx){
+  scrollToToday(idx, opts = {}){
     if(idx == null || idx < 0) return;
     if(!this.tableWrap || !this.table) return;
-    requestAnimationFrame(()=>{
+    const { behavior = 'smooth', immediate = false } = opts;
+    const applyScroll = ()=>{
       const headerRow = this.table.querySelector('tr');
       if(!headerRow) return;
       const target = headerRow.querySelector(`th:nth-child(${idx + 3})`);
       if(!target) return;
       const desired = target.offsetLeft - (this.tableWrap.clientWidth/2) + (target.offsetWidth/2);
       const left = desired < 0 ? 0 : desired;
-      this.tableWrap.scrollTo({ left, behavior: 'smooth' });
-    });
+      if(typeof this.tableWrap.scrollTo === 'function' && behavior !== 'auto'){
+        this.tableWrap.scrollTo({ left, behavior });
+      }else{
+        this.tableWrap.scrollLeft = left;
+      }
+    };
+    if(immediate){
+      applyScroll();
+    }else{
+      requestAnimationFrame(applyScroll);
+    }
+  }
+
+  syncBeforePrint(){
+    if(this.currentTodayIdx == null || this.currentTodayIdx < 0) return;
+    this.scrollToToday(this.currentTodayIdx, { behavior: 'auto', immediate: true });
   }
 
   renderCurve(dMeta, planDaily, doneDaily, todayIdx){
@@ -1711,6 +1787,14 @@ class ReportModule {
     }else{
       sections = resps.map(r=>{
         const list = this.cellMapDone?.get(`${r}|${ymd}`) || [];
+        const commentRaw = this.planComments?.[r]?.[ymd] || '';
+        const commentTrimmed = commentRaw.trim();
+        const hasComment = commentTrimmed !== '';
+        const isBajada = commentTrimmed.toLowerCase() === 'bajada';
+        const commentBody = hasComment ? esc(commentRaw).replace(/\n/g,'<br>') : '';
+        const commentHtml = hasComment
+          ? `<div class="comment-preview${isBajada ? ' bajada' : ''}"><span class="comment-title">${isBajada ? 'Bajada' : 'Comentario'}</span>${commentBody}</div>`
+          : '';
         const rows = list.map(g=>{
           const codes = g.cods.map(c=>`<button class="code-link" data-code="${esc(c)}" data-unir="${g.unirId}">${esc(c)}</button>`).join('');
           return `<tr><td>${esc(g.comunidad)}</td><td>${esc(g.codigo_mtc)}</td><td style="text-align:left">${codes}</td></tr>`;
@@ -1722,6 +1806,7 @@ class ReportModule {
         if(primaryResp && r === primaryResp) classes.push('active');
         return `<div class="${classes.join(' ')}">
           <h4>${esc(cap(r))} · ${countLabel}</h4>
+          ${commentHtml}
           <div style="overflow:auto"><table class="report">
             <thead><tr><th>Comunidad</th><th>Código MTC</th><th>cod_prel (grupo UNIR)</th></tr></thead>
             <tbody>${rowBody}</tbody>
@@ -1743,10 +1828,14 @@ class ReportModule {
       this.todaySummaryEl.innerHTML = '';
       return;
     }
+    const hasCommentFor = (resp)=>{
+      const raw = this.planComments?.[resp]?.[todayKey] || '';
+      return raw.trim() !== '';
+    };
     const sections = this.resps.map(r=>({
       resp: r,
       list: cellMapDone.get(`${r}|${todayKey}`) || []
-    })).filter(item => item.list.length > 0);
+    })).filter(item => item.list.length > 0 || hasCommentFor(item.resp));
 
     if(sections.length === 0){
       this.todaySummaryEl.innerHTML = '<div class="muted">Sin expedientes con avance hoy.</div>';
@@ -1755,11 +1844,20 @@ class ReportModule {
     }
 
     const body = sections.map(item=>{
+      const commentRaw = this.planComments?.[item.resp]?.[todayKey] || '';
+      const commentTrimmed = commentRaw.trim();
+      const hasComment = commentTrimmed !== '';
+      const isBajada = commentTrimmed.toLowerCase() === 'bajada';
+      const commentBody = hasComment ? esc(commentRaw).replace(/\n/g,'<br>') : '';
+      const commentHtml = hasComment
+        ? `<div class="comment-preview${isBajada ? ' bajada' : ''}"><span class="comment-title">${isBajada ? 'Bajada' : 'Comentario'}</span>${commentBody}</div>`
+        : '';
       const rows = item.list.map(g=>{
         const codes = g.cods.map(c=>`<button class="code-link" data-code="${esc(c)}" data-unir="${g.unirId}">${esc(c)}</button>`).join('');
         return `<tr><td>${esc(g.comunidad)}</td><td>${esc(g.codigo_mtc)}</td><td style="text-align:left">${codes}</td></tr>`;
       }).join('');
-      return `<div class="today-section"><h4>${esc(cap(item.resp))}</h4><table class="report" style="width:100%"><thead><tr><th>Comunidad</th><th>Código MTC</th><th>cod_prel</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+      const tableBody = rows || '<tr><td colspan="3" class="muted">Sin expedientes</td></tr>';
+      return `<div class="today-section"><h4>${esc(cap(item.resp))}</h4>${commentHtml}<table class="report" style="width:100%"><thead><tr><th>Comunidad</th><th>Código MTC</th><th>cod_prel</th></tr></thead><tbody>${tableBody}</tbody></table></div>`;
     }).join('');
 
     const suffix = this.config.todaySummaryTitle ? ` ${esc(this.config.todaySummaryTitle)}` : '';
@@ -1962,7 +2060,9 @@ const reportTech = new ReportModule({
   startInputId: 'rp_start',
   endInputId: 'rp_end',
   runBtnId: 'rp_run',
+  todayButtonId: 'rp_todayBtn',
   toggleBtnId: 'rp_toggleEdit',
+  printBtnId: 'rp_print',
   statusId: 'rp_status',
   chipsContainerId: 'rp_chips',
   tableId: 'rp_table',
@@ -1993,7 +2093,8 @@ const reportTech = new ReportModule({
   planLabel: 'Planificado',
   doneLabel: 'Elaborado',
   detailTitlePrefix: 'Detalle',
-  todaySummaryTitle: 'técnico'
+  todaySummaryTitle: 'técnico',
+  printTitle: 'Reporte — Planificado vs Elaborado'
 });
 
 const reportLegal = new ReportModule({
@@ -2005,6 +2106,7 @@ const reportLegal = new ReportModule({
   endInputId: 'lr_end',
   runBtnId: 'lr_run',
   toggleBtnId: 'lr_toggleEdit',
+  printBtnId: 'lr_print',
   statusId: 'lr_status',
   chipsContainerId: 'lr_chips',
   tableId: 'lr_table',
@@ -2035,11 +2137,29 @@ const reportLegal = new ReportModule({
   planLabel: 'Planificado',
   doneLabel: 'Avance',
   detailTitlePrefix: 'Detalle legal',
-  todaySummaryTitle: 'legal'
+  todaySummaryTitle: 'legal',
+  printTitle: 'Reporte — Avance Legal'
 });
 
 window.reportTech = reportTech;
 window.reportLegal = reportLegal;
+
+const syncReportScrollForPrint = ()=>{
+  Object.values(REPORT_MODULES).forEach(mod=>{
+    if(mod && typeof mod.syncBeforePrint === 'function'){
+      mod.syncBeforePrint();
+    }
+  });
+};
+
+window.addEventListener('beforeprint', syncReportScrollForPrint);
+
+if(window.matchMedia){
+  const mq = window.matchMedia('print');
+  const mqListener = e=>{ if(e.matches) syncReportScrollForPrint(); };
+  if(typeof mq.addEventListener === 'function') mq.addEventListener('change', mqListener);
+  else if(typeof mq.addListener === 'function') mq.addListener(mqListener);
+}
 
 function esc(s){ return (s??"").toString().replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
 function cap(r){ return (r||"").replace(/\b\w/g,m=>m.toUpperCase()); }
