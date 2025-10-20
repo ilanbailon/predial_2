@@ -1348,7 +1348,7 @@ class ReportModule {
     }
     const Y = new Date().getFullYear();
     this.startInput.value = `${Y}-09-02`;
-    this.endInput.value = `${Y}-10-25`;
+    this.endInput.value = `${Y}-10-31`;
   }
 
   setStatus(msg){ if(this.statusEl) this.statusEl.textContent = msg || ''; }
@@ -1458,7 +1458,7 @@ class ReportModule {
 
     const year = parseYmd(start).getFullYear();
     const generalStart = `${year}-09-01`;
-    const generalEnd = `${year}-10-25`;
+    const generalEnd = `${year}-10-31`;
 
     const selectFields = `unir,cod_prel,codigo_mtc,comunidad,${this.config.respField},${this.config.dateField}`;
 
